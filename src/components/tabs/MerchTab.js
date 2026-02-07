@@ -1,36 +1,56 @@
-import React from 'react';
-import { FlatList, StyleSheet, Dimensions } from 'react-native';
-import ProductCard from '../ui/ProductCard';
-import EmptyCard from '../ui/EmptyCard';
+import React, { useState } from 'react';
+import { Dimensions, FlatList, StyleSheet, TouchableOpacity, View } from 'react-native';
+import Icon from 'react-native-vector-icons/Feather';
 import { ALL_PRODUCTS } from '../sections/AllProducts';
+import EmptyCard from '../ui/EmptyCard';
+import ProductCard from '../ui/ProductCard';
 
 const { width } = Dimensions.get('window');
 const PRODUCT_CARD_WIDTH = width * 0.8;
 const ITEM_SPACING = width * 0.05;
 const PRODUCTS = ALL_PRODUCTS.filter(p => typeof p.id === 'string' && p.id.startsWith('m'));
 
-const MerchTab = ({ searchQuery = '', suppressEmpty = false }) => {
+const SeeAllCard = ({ onPress }) => (
+  <TouchableOpacity style={styles.seeAllCard} onPress={onPress}>
+    <Icon name="arrow-right" size={28} color="#fff" />
+  </TouchableOpacity>
+);
+
+const MerchTab = ({ route, searchQuery: propSearchQuery = '', suppressEmpty = false, refreshKey = 0 }) => {
+  const [showAll, setShowAll] = useState(false);
+  const searchQuery = route?.params?.searchQuery || propSearchQuery;
   const query = (searchQuery || '').trim().toLowerCase();
   const filtered = query ? PRODUCTS.filter(p => p.name.toLowerCase().includes(query)) : PRODUCTS;
   if (filtered.length === 0 && suppressEmpty) return null;
-  const displayData = filtered.length ? [...filtered, { id: 'placeholder', placeholder: true }] : [{ id: 'empty' }];
+  const limitedProducts = filtered.slice(0, 5);
+  let displayData = [];
+  if (filtered.length === 0) {
+    displayData = [{ id: 'empty', placeholder: true }];
+  } else if (showAll) {
+    displayData = [...filtered, { id: 'placeholder', placeholder: true }];
+  } else {
+    displayData = limitedProducts.length < filtered.length ? [...limitedProducts, { id: 'seeAll', seeAll: true }] : [...limitedProducts];
+  }
 
   const renderItem = ({ item }) => {
+    if (item.seeAll) return <SeeAllCard onPress={() => setShowAll(true)} />;
     if (item.id === 'empty' || item.placeholder) return <EmptyCard width={PRODUCT_CARD_WIDTH} height={width * 1} variant={'tab'} />;
-    return <ProductCard item={item} />;
+    return <ProductCard key={`${item.id}-${refreshKey}`} item={item} />;
   };
 
   return (
-    <FlatList
-      data={displayData}
-      keyExtractor={(item) => item.id}
-      renderItem={renderItem}
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      snapToInterval={PRODUCT_CARD_WIDTH + ITEM_SPACING}
-      decelerationRate="fast"
-      contentContainerStyle={styles.listContainer}
-    />
+    <View style={{ backgroundColor: '#FDF5E6', flex: 1 }}>
+      <FlatList
+        data={displayData}
+        keyExtractor={(item) => item.id}
+        renderItem={renderItem}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        snapToInterval={PRODUCT_CARD_WIDTH + ITEM_SPACING}
+        decelerationRate="fast"
+        contentContainerStyle={styles.listContainer}
+      />
+    </View>
   );
 };
 
@@ -58,7 +78,21 @@ const styles = StyleSheet.create({
   },
   buyButtonPrice: { fontSize: 18, fontWeight: 'bold' },
   buyButtonText: { fontSize: 18, fontWeight: 'bold' },
-
+  seeAllCard: {
+    width: 50,
+    height: PRODUCT_CARD_WIDTH * 0.3,
+    backgroundColor: '#000',
+    borderRadius: 30,
+    marginLeft: 10,
+    marginTop: 150,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.25,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 5,
+    elevation: 5,
+  },
 });
 
 export default MerchTab;

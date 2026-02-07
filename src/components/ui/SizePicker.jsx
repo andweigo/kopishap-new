@@ -1,6 +1,6 @@
 // src/components/ui/SizePicker.jsx
 import React from 'react';
-import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 const SizePicker = ({
   value,

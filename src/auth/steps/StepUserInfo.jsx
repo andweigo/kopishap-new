@@ -1,70 +1,130 @@
-import React from 'react';
-import { Text, TextInput, TouchableOpacity, View, StyleSheet, Dimensions, Image } from 'react-native';
+import React, { useState } from 'react';
+import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
-const { width } = Dimensions.get('window');
+import PrimaryButton from '../../components/buttons/PrimaryButton';
 
 const StepUserInfo = ({ formData, onChange, onNext, onBack }) => {
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const isPin = formData.authMethod === 'pin';
+
   return (
     <View style={styles.stepContainer}>
-      {onBack && (
-        <TouchableOpacity style={styles.backButton} onPress={onBack}>
-          <Icon name="arrow-left" size={28} color="#2c3e50" />
-        </TouchableOpacity>
-      )}
+      <View style={styles.header}>
+        {onBack && (
+          <TouchableOpacity style={styles.backButton} onPress={onBack}>
+            <Icon name="arrow-left" size={24} color="#000000" />
+          </TouchableOpacity>
+        )}
+      </View>
 
-
-      <View style={styles.contentCard}>
-
-        <Image
-          source={require('../../imgs/welcome/wondering.png')}
-          style={styles.image}
-          resizeMode="contain"
-        />
-
+      <View style={styles.contentWrapper}>
         <Text style={styles.title}>Create Account</Text>
-        
-        <TextInput
-          placeholder="Name"
-          placeholderTextColor="#95a5a6"
-          style={styles.input}
-          value={formData.name}
-          onChangeText={(text) => onChange('name', text)}
-        />
-        
-        <TextInput
-          placeholder="Email"
-          placeholderTextColor="#95a5a6"
-          style={styles.input}
-          value={formData.email}
-          onChangeText={(text) => onChange('email', text)}
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
-        
-        <TextInput
-          placeholder="Password"
-          placeholderTextColor="#95a5a6"
-          secureTextEntry
-          style={styles.input}
-          value={formData.password}
-          onChangeText={(text) => onChange('password', text)}
-        />
-        
-        <TextInput
-          placeholder="Confirm Password"
-          placeholderTextColor="#95a5a6"
-          secureTextEntry
-          style={styles.input}
-          value={formData.confirmPassword}
-          onChangeText={(text) => onChange('confirmPassword', text)}
-        />
-        
-        <TouchableOpacity style={styles.button} onPress={onNext}>
-          <Text style={styles.buttonText}>Next</Text>
-          <View style={styles.arrowContainer}>
-            <Text style={styles.arrowText}>→</Text>
+        <Text style={styles.subtitle}>Enter your details to get started</Text>
+
+        <View style={styles.formContainer}>
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Username</Text>
+            <TextInput
+              placeholder="John Doe"
+              placeholderTextColor="#a8a8a8"
+              style={styles.input}
+              value={formData.name}
+              onChangeText={(text) => onChange('name', text)}
+            />
           </View>
-        </TouchableOpacity>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Email</Text>
+            <TextInput
+              placeholder="you@example.com"
+              placeholderTextColor="#a8a8a8"
+              style={styles.input}
+              value={formData.email}
+              onChangeText={(text) => onChange('email', text)}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Security Method</Text>
+            <View style={styles.authMethodContainer}>
+              <TouchableOpacity 
+                style={[styles.authMethodButton, !isPin && styles.authMethodSelected]} 
+                onPress={() => { onChange('authMethod', 'password'); onChange('password', ''); onChange('confirmPassword', ''); }}
+              >
+                <Text style={[styles.authMethodText, !isPin && styles.authMethodTextSelected]}>Password</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.authMethodButton, isPin && styles.authMethodSelected]} 
+                onPress={() => { onChange('authMethod', 'pin'); onChange('password', ''); onChange('confirmPassword', ''); }}
+              >
+                <Text style={[styles.authMethodText, isPin && styles.authMethodTextSelected]}>PIN</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>{isPin ? 'Create PIN (4-6 digits)' : 'Password'}</Text>
+            <View style={styles.passwordInputWrapper}>
+              <TextInput
+                placeholder="At least 6 characters"
+                placeholderTextColor="#a8a8a8"
+                secureTextEntry={!showPassword}
+                style={styles.passwordInput}
+                value={formData.password}
+                onChangeText={(text) => onChange('password', text)}
+                keyboardType={isPin ? 'numeric' : 'default'}
+                maxLength={isPin ? 6 : undefined}
+              />
+              <TouchableOpacity 
+                style={styles.iconButton}
+                onPress={() => setShowPassword(!showPassword)}
+              >
+                <Icon 
+                  name={showPassword ? 'eye' : 'eye-off'} 
+                  size={18} 
+                  color="#999999" 
+                />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>{isPin ? 'Confirm PIN' : 'Confirm Password'}</Text>
+            <View style={styles.passwordInputWrapper}>
+              <TextInput
+                placeholder="Re-enter your password"
+                placeholderTextColor="#a8a8a8"
+                secureTextEntry={!showConfirmPassword}
+                style={styles.passwordInput}
+                value={formData.confirmPassword}
+                onChangeText={(text) => onChange('confirmPassword', text)}
+                keyboardType={isPin ? 'numeric' : 'default'}
+                maxLength={isPin ? 6 : undefined}
+              />
+              <TouchableOpacity 
+                style={styles.iconButton}
+                onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+              >
+                <Icon 
+                  name={showConfirmPassword ? 'eye' : 'eye-off'} 
+                  size={18} 
+                  color="#999999" 
+                />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+
+        <PrimaryButton
+          title="Continue"
+          onPress={onNext}
+          icon="arrow-right"
+          style={{ marginTop: 32 }}
+        />
       </View>
     </View>
   );
@@ -73,97 +133,116 @@ const StepUserInfo = ({ formData, onChange, onNext, onBack }) => {
 const styles = StyleSheet.create({
   stepContainer: {
     flex: 1,
-    backgroundColor: '#FDF5E6',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
+    backgroundColor: '#Fdf5e6',
+    padding: 24,
+  },
+
+  header: {
+    marginBottom: 32,
   },
 
   backButton: {
-    position: 'absolute',
-    top: 10, 
-    left: 5,
-    zIndex: 10,
-  },
-
-  contentCard: {
-    backgroundColor: '#FDF5E6',
-    borderRadius: 40,
-    width: Math.min(width - 40, 400),
-    padding: 40,
-    paddingVertical: 50,
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    backgroundColor: '#fdf5e6',
+    justifyContent: 'center',
     alignItems: 'center',
   },
 
-  image: {
-    width: 300,
-    height: 300,
-    marginBottom: 5,
-    marginTop: -60,
+  contentWrapper: {
+    flex: 1,
+    width: '100%',
+    maxWidth: 360,
+    alignSelf: 'center',
   },
 
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#2c3e50',
-    textAlign: 'center',
-    marginBottom: 20,
+    fontSize: 32,
+    fontWeight: '700',
+    color: '#000000',
+    marginBottom: 8,
   },
 
-  input: {
-    width: '100%',
-    backgroundColor: '#f8f9fa',
-    borderRadius: 15,
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    fontSize: 16,
-    color: '#2c3e50',
-    marginBottom: 10,
-    borderWidth: 2,
-    borderColor: 'black',
+  subtitle: {
+    fontSize: 14,
+    color: '#999999',
+    marginBottom: 32,
+    fontWeight: '400',
   },
 
-  button: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#000000ff',
-    paddingVertical: 16,
-    paddingHorizontal: 25,
-    paddingRight: 20,
-    borderRadius: 30,
-    elevation: 5,
-    width: '100%',
-    marginTop: 10,
-    borderWidth: 1,
-    borderColor: '#f0f0f0',
-    bottom: 10,
-  },
-
-  buttonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#ffffffff',
+  formContainer: {
     flex: 1,
   },
 
-  arrowContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#f9ca24',
-    borderColor: 'white',
-    borderWidth: 2,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 12,
+  inputGroup: {
+    marginBottom: 24,
   },
 
-  arrowText: {
-    fontSize: 22,
-    color: '#2c3e50',
-    fontWeight: 'bold',
-    bottom: 5,
+  label: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#1a1a1a',
+    marginBottom: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+
+  authMethodContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#E5E7EB',
+    borderRadius: 8,
+    padding: 4,
+  },
+  authMethodButton: {
+    flex: 1,
+    paddingVertical: 8,
+    alignItems: 'center',
+    borderRadius: 6,
+  },
+  authMethodSelected: {
+    backgroundColor: '#FFF',
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  authMethodText: { fontSize: 13, fontWeight: '500', color: '#666' },
+  authMethodTextSelected: { color: '#000', fontWeight: '700' },
+
+  input: {
+    backgroundColor: '#fdf5e6',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+    paddingVertical: 12,
+    paddingHorizontal: 0,
+    fontSize: 15,
+    color: '#000000',
+    fontWeight: '500',
+  },
+
+  passwordInputWrapper: {
+    position: 'relative',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  passwordInput: {
+    flex: 1,
+    backgroundColor: '#fdf5e6',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+    paddingVertical: 12,
+    paddingHorizontal: 0,
+    fontSize: 15,
+    color: '#000000',
+    fontWeight: '500',
+    paddingRight: 40,
+  },
+
+  iconButton: {
+    position: 'absolute',
+    right: 0,
+    padding: 8,
   },
 });
 

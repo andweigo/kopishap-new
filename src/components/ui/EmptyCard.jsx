@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Dimensions, Image } from 'react-native';
+import { Dimensions, Image, StyleSheet, Text, View } from 'react-native';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -15,7 +15,7 @@ const EmptyCard = ({ width, height, variant = 'default' }) => {
   return (
     <View style={[styles.card, variantStyles.card, { width: resolvedWidth, height: resolvedHeight }]}> 
       <Image source={require('../../imgs/no_prod.jpg')} style={[styles.imagePlaceholder, variantStyles.image]} resizeMode="contain" />
-      <Text style={[styles.text, variantStyles.text]}>No Products</Text>
+      <Text style={[styles.text, variantStyles.text]}>COMING SOON!</Text>
     </View>
   );
 };
@@ -37,7 +37,7 @@ const styles = StyleSheet.create({
     text: { fontSize: 13, color: '#666' },
   },
   tabVariant: {
-    card: { borderRadius: 30, backgroundColor: '#d3d3d3' },
+    card: { borderRadius: 30, backgroundColor: '#d3d3d3', marginTop: 20 },
     image: { height: '60%' },
     text: { fontSize: 16, color: '#555' },
   },

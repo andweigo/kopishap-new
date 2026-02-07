@@ -1,11 +1,14 @@
 import React from 'react';
-import { Text, TouchableOpacity, View, StyleSheet, Dimensions } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
+import PrimaryButton from '../../components/buttons/PrimaryButton';
 
-const { width } = Dimensions.get('window');
+const StepPreferences = ({ preferences, setPreferences, onNext, onBack, onSkip, isLoading = false }) => {
+  // Use actual product categories instead of individual products
+  const categories = ['Coffee', 'Lemonade', 'Pastries', 'Specials', 'Merch'];
 
-const StepPreferences = ({ preferences, setPreferences, onNext, onBack }) => {
-  const options = ['Espresso', 'Latte', 'Cappuccino', 'Lemonade', 'Pastries', 'Others'];
+  // Disable finish button if no preferences selected
+  const isPreferencesValid = preferences && preferences.length > 0;
 
   const toggleOption = (item) => {
     if (preferences.includes(item)) {
@@ -17,16 +20,22 @@ const StepPreferences = ({ preferences, setPreferences, onNext, onBack }) => {
 
   return (
     <View style={styles.stepContainer}>
-      <TouchableOpacity style={styles.backButton} onPress={onBack}>
-        <Icon name="arrow-left" size={24} color="#2c3e50" />
-      </TouchableOpacity>
+      <View style={styles.header}>
+        <TouchableOpacity 
+          style={styles.backButton} 
+          onPress={onBack} 
+          disabled={isLoading}
+        >
+          <Icon name="arrow-left" size={24} color="#000000" />
+        </TouchableOpacity>
+      </View>
 
-      <View style={styles.contentCard}>
-        <Text style={styles.title}>Choose your favorites</Text>
-        <Text style={styles.subtitle}>Select the items you love</Text>
+      <View style={styles.contentWrapper}>
+        <Text style={styles.title}>Customize Preferences</Text>
+        <Text style={styles.subtitle}>Select what you love, skip the rest</Text>
         
         <View style={styles.optionsContainer}>
-          {options.map((item) => {
+          {categories.map((item) => {
             const selected = preferences.includes(item);
             return (
               <TouchableOpacity
@@ -36,7 +45,8 @@ const StepPreferences = ({ preferences, setPreferences, onNext, onBack }) => {
                   selected && styles.preferencesOptionSelected,
                 ]}
                 onPress={() => toggleOption(item)}
-                activeOpacity={0.7}
+                activeOpacity={0.6}
+                disabled={isLoading}
               >
                 <Text
                   style={[
@@ -46,19 +56,29 @@ const StepPreferences = ({ preferences, setPreferences, onNext, onBack }) => {
                 >
                   {item}
                 </Text>
-                {selected && <Icon name="check" size={20} color="#f9ca24" />}
+                {selected && (
+                  <Icon name="check" size={16} color="#000000" />
+                )}
               </TouchableOpacity>
             );
           })}
         </View>
 
-        <TouchableOpacity style={styles.button} onPress={onNext}>
-             <Text style={styles.buttonText}>Finish</Text>
-             <View style={styles.arrowContainer}>
-             <Text style={styles.arrowText}>→</Text>
-            </View>
-        </TouchableOpacity>
-
+        {isPreferencesValid ? (
+          <PrimaryButton
+            title="Complete Setup"
+            onPress={onNext}
+            icon="arrow-right"
+            loading={isLoading}
+          />
+        ) : (
+          <PrimaryButton
+            title="Skip"
+            onPress={onSkip}
+            loading={isLoading}
+            style={{ backgroundColor: '#666' }}
+          />
+        )}
       </View>
     </View>
   );
@@ -67,117 +87,76 @@ const StepPreferences = ({ preferences, setPreferences, onNext, onBack }) => {
 const styles = StyleSheet.create({
   stepContainer: {
     flex: 1,
-    backgroundColor: '#FDF5E6',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
+    backgroundColor: '#fdf5e6',
+    padding: 24,
+  },
+
+  header: {
+    marginBottom: 32,
   },
 
   backButton: {
-    position: 'absolute',
-    top: 10,
-    left: 5,
-    zIndex: 10,
-  },
-
-  contentCard: {
-    backgroundColor: '#FDF5E6',
-    borderRadius: 40,
-    width: Math.min(width - 40, 400),
-    padding: 40,
-    paddingVertical: 50,
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    backgroundColor: '#fdf5e6',
+    justifyContent: 'center',
     alignItems: 'center',
   },
 
+  contentWrapper: {
+    flex: 1,
+    width: '100%',
+    maxWidth: 360,
+    alignSelf: 'center',
+  },
+
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#2c3e50',
-    textAlign: 'center',
+    fontSize: 32,
+    fontWeight: '700',
+    color: '#000000',
     marginBottom: 8,
   },
 
   subtitle: {
-    fontSize: 15,
-    color: '#7f8c8d',
-    textAlign: 'center',
-    marginBottom: 30,
+    fontSize: 14,
+    color: '#999999',
+    marginBottom: 32,
+    fontWeight: '400',
   },
 
   optionsContainer: {
-    width: '100%',
-    marginBottom: 10,
+    flex: 1,
+    marginBottom: 32,
   },
 
   preferencesOption: {
-    width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#f8f9fa',
-    borderRadius: 15,
+    backgroundColor: '#fdf5e6',
     paddingVertical: 16,
-    paddingHorizontal: 20,
-    marginBottom: 12,
-    borderWidth: 2,
-    borderColor: 'black',
+    paddingHorizontal: 16,
+    marginBottom: 14,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: '#000000',
   },
 
   preferencesOptionSelected: {
-    backgroundColor: '#fff9e6',
-    borderColor: '#f9ca24',
+    backgroundColor: '#F0F0F0',
+    borderColor: '#000000',
   },
 
   preferencesText: {
-    fontSize: 16,
-    color: '#2c3e50',
+    fontSize: 15,
+    color: '#666666',
     fontWeight: '500',
   },
 
   preferencesTextSelected: {
+    color: '#000000',
     fontWeight: '600',
-  },
-
-  button: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#000000ff',
-    paddingVertical: 16,
-    paddingHorizontal: 25,
-    paddingRight: 20,
-    borderRadius: 30,
-    width: '100%',
-    marginTop: 20,
-    borderWidth: 2,
-    borderColor: 'black',
-    bottom: 10,
-  },
-
-  buttonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#ffffffff',
-    flex: 1,
-  },
-
-  arrowContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#f9ca24',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 12,
-    borderColor: 'white',
-    borderWidth: 2,
-  },
-
-  arrowText: {
-    fontSize: 22,
-    color: '#2c3e50',
-    fontWeight: 'bold',
-    bottom: 5,
   },
 });
 

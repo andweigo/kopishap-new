@@ -1,7 +1,7 @@
-import React, { useRef, useEffect } from 'react';
-import { View, TouchableOpacity, Text, Animated, StyleSheet } from 'react-native';
-import Icon from 'react-native-vector-icons/Feather';
 import { useNavigation } from '@react-navigation/native';
+import React, { useEffect, useRef } from 'react';
+import { Animated, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import Icon from 'react-native-vector-icons/Feather';
 import { useCart } from '../../context/CartContext';
 import useAutoHideBottomNav from '../../hooks/useAutoHideBottomNav';
 
@@ -37,7 +37,7 @@ const BottomNav = ({ activeTab, setActiveTab }) => {
     >
       <View style={styles.bottomNav}>
         <TouchableOpacity
-          onPress={() => { setActiveTab('home'); navigation.navigate('Home'); }}
+          onPress={() => { setActiveTab('home'); navigation.navigate('HomeStack'); }}
           accessible
           accessibilityLabel="Home"
         >
@@ -45,7 +45,7 @@ const BottomNav = ({ activeTab, setActiveTab }) => {
         </TouchableOpacity>
 
         <TouchableOpacity
-          onPress={() => { setActiveTab('cart'); navigation.navigate('Cart'); }}
+          onPress={() => { setActiveTab('cart'); navigation.navigate('HomeStack', { screen: 'Cart' }); }}
           accessible
           accessibilityLabel="Cart"
           style={styles.cartIconWrapper}
@@ -79,6 +79,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingBottom: 25,
     paddingHorizontal: 20,
+    backgroundColor: 'transparent',
   },
   bottomNav: {
     flexDirection: 'row',

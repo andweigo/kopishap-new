@@ -1,9 +1,9 @@
-import React from 'react';
-import { FlatList, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { Dimensions, FlatList, StyleSheet, TouchableOpacity, View } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
-import ProductCard from '../ui/ProductCard';
-import EmptyCard from '../ui/EmptyCard';
 import { ALL_PRODUCTS } from '../sections/AllProducts';
+import EmptyCard from '../ui/EmptyCard';
+import ProductCard from '../ui/ProductCard';
 
 const { width } = Dimensions.get('window');
 const PRODUCT_CARD_WIDTH = width * 0.8;
@@ -18,7 +18,9 @@ const SeeAllCard = ({ onPress }) => (
 );
 
 
-const CoffeeTab = ({ showAll = false, onSeeAll, searchQuery = '', suppressEmpty = false }) => {
+const CoffeeTab = ({ route, searchQuery: propSearchQuery = '', showAll: propShowAll = false, onSeeAll, suppressEmpty = false, refreshKey = 0 }) => {
+  const [showAll, setShowAll] = useState(false);
+  const searchQuery = route?.params?.searchQuery || propSearchQuery;
   const query = (searchQuery || '').trim().toLowerCase();
   const filtered = query ? PRODUCTS.filter(p => p.name.toLowerCase().includes(query)) : PRODUCTS;
   if (filtered.length === 0 && suppressEmpty) return null;
@@ -33,22 +35,24 @@ const CoffeeTab = ({ showAll = false, onSeeAll, searchQuery = '', suppressEmpty 
   }
 
   const renderItem = ({ item }) => {
-    if (item.seeAll) return <SeeAllCard onPress={onSeeAll} />;
+    if (item.seeAll) return <SeeAllCard onPress={() => setShowAll(true)} />;
     if (item.id === 'empty' || item.placeholder) return <EmptyCard width={PRODUCT_CARD_WIDTH} height={width * 1} variant={'tab'} />;
-    return <ProductCard item={item} />;
+    return <ProductCard key={`${item.id}-${refreshKey}`} item={item} />;
   };
 
   return (
-    <FlatList
-      data={displayData}
-      keyExtractor={(item) => item.id}
-      renderItem={renderItem}
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      snapToInterval={PRODUCT_CARD_WIDTH + ITEM_SPACING}
-      decelerationRate="fast"
-      contentContainerStyle={styles.listContainer}
-    />
+    <View style={{ backgroundColor: '#FDF5E6', flex: 1 }}>
+      <FlatList
+        data={displayData}
+        keyExtractor={(item) => item.id}
+        renderItem={renderItem}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        snapToInterval={PRODUCT_CARD_WIDTH + ITEM_SPACING}
+        decelerationRate="fast"
+        contentContainerStyle={styles.listContainer}
+      />
+    </View>
   );
 };
 

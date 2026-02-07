@@ -1,6 +1,6 @@
 // src/components/cards/BaseProductCard.jsx
 import React from 'react';
-import { View, Text, Image, StyleSheet } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
 
 const getDisplayPrice = (price) => {
   if (typeof price === 'number') return `₱${price}`;

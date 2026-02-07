@@ -1,28 +1,44 @@
-import React, { useState, useRef } from 'react';
+/**
+ * Buy Screen
+ * Product detail and purchase screen
+ * Refactored to use hooks following OOP principles
+ */
+import React, { useCallback } from 'react';
 import {
-  View,
-  Text,
-  Image,
-  StyleSheet,
-  TouchableOpacity,
-  SafeAreaView,
   Dimensions,
+  Image,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Feather';
+import SizePicker from '../components/ui/SizePicker';
 import { useCart } from '../context/CartContext';
 import { ALL_PRODUCTS } from '../data/products';
-import SizePicker from '../components/ui/SizePicker';
+import useCurrentUser from '../hooks/useCurrentUser';
+import usePriceCalculator from '../hooks/usePriceCalculator';
+import useProductSelection from '../hooks/useProductSelection';
 
 const { width, height } = Dimensions.get('window');
 
 const Buy = ({ navigation, route }) => {
   const { addItem, cartItems } = useCart();
-  const [quantity, setQuantity] = useState(1);
-  const [selectedSize, setSelectedSize] = useState('L');
-
-  const quantityRef = useRef(quantity);
-  const sizeRef = useRef(selectedSize);
-
+  const { isLoggedIn } = useCurrentUser();
+  const { getItemPrice, getItemTotal } = usePriceCalculator();
+  
+  const {
+    quantity,
+    selectedSize,
+    quantityRef,
+    sizeRef,
+    SIZES,
+    incrementQuantity,
+    decrementQuantity,
+    selectSize,
+  } = useProductSelection();
 
   const product =
     route?.params?.product || ALL_PRODUCTS.find((p) => p.id === 'c8') || {
@@ -33,40 +49,14 @@ const Buy = ({ navigation, route }) => {
     };
 
   const hasSizes = typeof product.price === 'object';
+  const currentPrice = getItemPrice(product);
+  const totalPrice = getItemTotal(product);
 
-  const getPrice = (size) => {
-    return hasSizes ? product.price[size] : product.price;
-  };
+  const handleBackPress = useCallback(() => {
+    navigation.goBack();
+  }, [navigation]);
 
-  const incrementQuantity = () => {
-    setQuantity((prev) => {
-      const newQty = prev + 1;
-      quantityRef.current = newQty;
-      return newQty;
-    });
-  };
-
-  const decrementQuantity = () => {
-    setQuantity((prev) => {
-      const newQty = prev > 1 ? prev - 1 : 1;
-      quantityRef.current = newQty;
-      return newQty;
-    });
-  };
-
-  const selectSize = (size) => {
-    setSelectedSize(size);
-    sizeRef.current = size;
-  };
-
-  const currentPrice = getPrice(selectedSize);
-  const checkoutProduct = {
-    ...product,
-    price: currentPrice, 
-    priceDetails: product.price,
-  };
-
-  const handleAddToCart = () => {
+  const handleAddToCart = useCallback(() => {
     addItem({
       ...product,
       price: currentPrice,
@@ -74,16 +64,35 @@ const Buy = ({ navigation, route }) => {
       quantity: quantity,
     });
     navigation.navigate('Cart');
+  }, [addItem, product, currentPrice, hasSizes, selectedSize, quantity, navigation]);
+
+  const handleBuyNow = useCallback(() => {
+    navigation.navigate('Checkout', {
+      items: [{
+        ...product,
+        price: currentPrice,
+        priceDetails: product.price,
+        quantity: quantityRef.current,
+        size: sizeRef.current,
+      }],
+      quantity: quantityRef.current,
+      size: sizeRef.current,
+    });
+  }, [product, currentPrice, quantityRef, sizeRef, navigation]);
+
+  const checkoutProduct = {
+    ...product,
+    price: currentPrice,
+    priceDetails: product.price,
   };
 
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FDF5E6" />
+      
       {/* HEADER */}
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
+        <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
           <Icon name="arrow-left" size={28} color="#000" />
         </TouchableOpacity>
 
@@ -111,56 +120,63 @@ const Buy = ({ navigation, route }) => {
         />
       </View>
 
-
       {hasSizes && (
-          <SizePicker value={selectedSize} onChange={selectSize} buttonSize={48} spacing={8} containerStyle={styles.sizeContainer} />
+        <SizePicker
+          value={selectedSize}
+          onChange={selectSize}
+          buttonSize={48}
+          spacing={8}
+          containerStyle={styles.sizeContainer}
+        />
       )}
 
-
-      <View style={styles.productInfoContainer}>
-        <Text style={styles.productName}>{product.name}</Text>
-        <Text style={styles.selectedSize}>{hasSizes ? sizeRef.current : ''}</Text>
-      </View>
-
-      <View style={styles.quantityUnderSizeContainer}>
-        <Text style={styles.quantityLabel}>
-          {quantityRef.current}X
-        </Text>
-        <Text style={styles.priceLabel}>₱{currentPrice}</Text>
-      </View>
-
-      <View style={styles.quantityContainer}>
-        <TouchableOpacity
-          style={styles.quantityButton}
-          onPress={decrementQuantity}
-        >
-          <Text style={styles.quantityButtonText}>−</Text>
-        </TouchableOpacity>
-
-        <View style={styles.quantityDisplay}>
-          <Text style={styles.quantityText}>
-            {quantityRef.current}
-          </Text>
+      <View style={styles.contentCard}>
+        <View style={styles.productHeaderRow}>
+          <View>
+            <Text style={styles.productName}>{product.name}</Text>
+            {hasSizes && <Text style={styles.sizeTagText}>Size: {sizeRef.current}</Text>}
+          </View>
         </View>
 
-        <TouchableOpacity
-          style={styles.quantityButton}
-          onPress={incrementQuantity}
-        >
-          <Text style={styles.quantityButtonText}>+</Text>
-        </TouchableOpacity>
+        <View style={styles.divider} />
+
+        <View style={styles.priceQtySection}>
+          <View style={styles.priceBox}>
+            <Text style={styles.priceLabel}>Price</Text>
+            <Text style={styles.priceAmount}>₱{currentPrice}</Text>
+          </View>
+          <View style={styles.dividerVertical} />
+          <View style={styles.qtyControlBox}>
+            <Text style={styles.qtyLabel}>Quantity</Text>
+            <View style={styles.qtyControls}>
+              <TouchableOpacity
+                style={styles.qtyButton}
+                onPress={decrementQuantity}
+                activeOpacity={0.7}
+              >
+                <Icon name="minus" size={16} color="#FFF" />
+              </TouchableOpacity>
+              <Text style={styles.qtyValue}>{quantityRef.current}</Text>
+              <TouchableOpacity
+                style={styles.qtyButton}
+                onPress={incrementQuantity}
+                activeOpacity={0.7}
+              >
+                <Icon name="plus" size={16} color="#FFF" />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.divider} />
+
+        <View style={styles.totalRow}>
+          <Text style={styles.totalLabel}>Total</Text>
+          <Text style={styles.totalAmount}>₱{totalPrice}</Text>
+        </View>
       </View>
 
-      <TouchableOpacity
-        style={styles.buyButton}
-        onPress={() =>
-          navigation.navigate('Checkout', {
-            items: [{ ...checkoutProduct, quantity: quantityRef.current, size: sizeRef.current }],
-            quantity: quantityRef.current,
-            size: sizeRef.current,
-          })
-        }
-      >
+      <TouchableOpacity style={styles.buyButton} onPress={handleBuyNow}>
         <Text style={styles.buyButtonText}>Buy Now</Text>
       </TouchableOpacity>
     </SafeAreaView>
@@ -229,24 +245,10 @@ const styles = StyleSheet.create({
     height: height * 0.35,
   },
 
-  productInfoContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginHorizontal: 30,
-    marginBottom: 20,
-  },
-
   productName: {
-    fontSize: 15,
-    fontWeight: '900',
+    fontSize: 18,
+    fontWeight: '700',
     color: '#000',
-  },
-
-  selectedSize: {
-    fontSize: 15,
-    fontWeight: '500',
-    color: '#B8956A',
   },
 
   sizeContainer: {
@@ -254,107 +256,144 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 40,
-    marginBottom: 50,
-    marginTop: -100,
-    gap: 15,
-  },
-
-  sizeButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 40,
-    backgroundColor: '#E8E4DD',
-    justifyContent: 'center',
-    alignItems: 'center',
     marginBottom: 20,
-    marginTop: -180,
+    marginTop: -80,
+    gap: 12,
   },
 
-  sizeButtonActive: {
-    backgroundColor: '#B8956A',
+  contentCard: {
+    marginHorizontal: 20,
+    marginBottom: 20,
+    backgroundColor: '#FFF',
+    borderRadius: 14,
+    padding: 16,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
   },
 
-  sizeText: {
+  productHeaderRow: {
+    marginBottom: 12,
+  },
+
+  sizeTagText: {
     fontSize: 12,
-    fontWeight: '600',
-    color: '#000',
+    fontWeight: '500',
+    color: '#666',
+    marginTop: 6,
   },
 
-  sizeTextActive: {
-    color: '#000',
+  divider: {
+    height: 1,
+    backgroundColor: '#E8E4DB',
+    marginVertical: 12,
   },
 
-  quantityUnderSizeContainer: {
-    alignItems: 'center',
-    marginBottom: 20,
+  dividerVertical: {
+    width: 1,
+    height: 60,
+    backgroundColor: '#E8E4DB',
+    marginHorizontal: 12,
   },
 
-  quantityLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#000',
-    marginTop: -20,
-    left: 140,
-  },
-  priceLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#000',
-    marginTop: -20,
-    right: 140,
-  },
-
-  quantityContainer: {
+  priceQtySection: {
     flexDirection: 'row',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    marginBottom: 30,
-    gap: 20,
+    marginVertical: 8,
   },
 
-  quantityButton: {
-    width: 130,
-    height: 60,
-    borderRadius: 40,
-    backgroundColor: '#E8E4DD',
-    justifyContent: 'center',
+  priceBox: {
+    flex: 1,
     alignItems: 'center',
   },
 
-  quantityButtonText: {
-    fontSize: 30,
-    fontWeight: '300',
+  priceLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#999',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 4,
+  },
+
+  priceAmount: {
+    fontSize: 20,
+    fontWeight: '700',
     color: '#000',
   },
 
-  quantityDisplay: {
-    width: 100,
-    height: 60,
-    borderRadius: 40,
-    backgroundColor: '#B8956A',
+  qtyControlBox: {
+    flex: 1,
+    alignItems: 'center',
+  },
+
+  qtyLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#999',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 6,
+  },
+
+  qtyControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+
+  qtyButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: '#000',
     justifyContent: 'center',
     alignItems: 'center',
   },
 
-  quantityText: {
-    fontSize: 20,
+  qtyValue: {
+    fontSize: 16,
     fontWeight: '600',
+    color: '#000',
+    minWidth: 20,
+    textAlign: 'center',
+  },
+
+  totalRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+
+  totalLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#666',
+  },
+
+  totalAmount: {
+    fontSize: 18,
+    fontWeight: '700',
     color: '#000',
   },
 
   buyButton: {
-    marginHorizontal: 60,
-    backgroundColor: '#000',
-    paddingVertical: 15,
-    borderRadius: 50,
-    alignItems: 'center',
+    marginHorizontal: 20,
     marginBottom: 30,
+    backgroundColor: '#000',
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
   },
 
   buyButtonText: {
     color: '#fff',
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 16,
+    fontWeight: '600',
+    letterSpacing: 0.3,
   },
 });

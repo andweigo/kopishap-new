@@ -1,29 +1,22 @@
 import React, { createContext, useContext, useState } from 'react';
-import { Platform, ToastAndroid, Alert } from 'react-native';
+import useToast from '../hooks/useToast';
 
 const CartContext = createContext();
 
 export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState([]);
-
-  const showToast = (message) => {
-    if (Platform.OS === 'android') {
-      ToastAndroid.show(message, ToastAndroid.SHORT);
-    } else {
-      Alert.alert(message);
-    }
-  };
+  const { showSuccess, showInfo } = useToast();
 
   const addItem = (item) => {
-    setCartItems((prev) => {
-      const existing = prev.find((i) => i.id === item.id);
-      if (existing) {
-        showToast('Item already added to cart');
-        return prev;
-      }
-      showToast('Item added to cart');
-      return [...prev, { ...item, quantity: 1, selected: true, size: item.size || 'L' }];
-    });
+    const existing = cartItems.find((i) => i.id === item.id);
+    
+    if (existing) {
+      showInfo('Item already added to cart');
+      return;
+    }
+    
+    setCartItems((prev) => [...prev, { ...item, quantity: 1, selected: true, size: item.size || 'L' }]);
+    showSuccess('Item added to cart');
   };
 
   const updateQuantity = (id, increment) => {

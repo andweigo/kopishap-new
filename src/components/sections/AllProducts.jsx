@@ -1,20 +1,20 @@
 // src/components/sections/AllProducts.jsx
 import React, { useState } from 'react';
-import { View, Text, FlatList, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
+import { Dimensions, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ALL_PRODUCTS } from '../../data/products';
 import AllProductsCard from '../cards/AllProductsCard';
 import EmptyCard from '../ui/EmptyCard';
 import NoMatch from '../ui/NoMatch';
-import { ALL_PRODUCTS } from '../../data/products';
 
 
 const { width } = Dimensions.get('window');
 const PRODUCT_CARD_HEIGHT = 200;
-const ITEM_SPACING = width * 0.05;
+const ITEM_SPACING = width * 0.02;
 
 const AllProducts = ({ onScroll, searchQuery, setSearchQuery } = {}) => {
   const [showAll, setShowAll] = useState(false);
 
-  const INITIAL_COUNT = 14;
+  const INITIAL_COUNT = 10;
   const query = (typeof searchQuery === 'string' ? searchQuery.trim().toLowerCase() : '');
   const filtered = query ? ALL_PRODUCTS.filter(p => p.name.toLowerCase().includes(query)) : ALL_PRODUCTS;
   const baseData = showAll ? filtered : filtered.slice(0, INITIAL_COUNT);
@@ -28,25 +28,8 @@ const AllProducts = ({ onScroll, searchQuery, setSearchQuery } = {}) => {
     );
   }
 
-  return (
+  const renderSeeMore = () => (
     <View>
-      <Text style={styles.sectionTitle}>Kape Doon's Products</Text>
-      <FlatList
-        data={displayData}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => {
-          if (item.placeholder) return <EmptyCard width={'47%'} height={PRODUCT_CARD_HEIGHT} variant={'grid'} />;
-          return <AllProductsCard item={item} height={PRODUCT_CARD_HEIGHT} />;
-        }}
-        numColumns={2}
-        columnWrapperStyle={styles.columnWrapper}
-        nestedScrollEnabled={true}
-        onScroll={onScroll}
-        scrollEventThrottle={16}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.listContainer}
-      />
-
       {!showAll && filtered.length > INITIAL_COUNT && (
         <View style={styles.seeMoreContainer}>
           <TouchableOpacity style={styles.seeMoreButton} onPress={() => setShowAll(true)} activeOpacity={0.8}>
@@ -64,6 +47,29 @@ const AllProducts = ({ onScroll, searchQuery, setSearchQuery } = {}) => {
       )}
     </View>
   );
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.sectionTitle}>Kape Doon's Products</Text>
+      <FlatList
+        data={displayData}
+        scrollEnabled={false}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => {
+          if (item.placeholder) return <EmptyCard width={'47%'} height={PRODUCT_CARD_HEIGHT} variant={'grid'} />;
+          return <AllProductsCard key={item.id} item={item} height={PRODUCT_CARD_HEIGHT} />;
+        }}
+        numColumns={2}
+        columnWrapperStyle={styles.columnWrapper}
+        nestedScrollEnabled={false}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.listContainer}
+        ListFooterComponent={renderSeeMore}
+      />
+    </View>
+  );
 };
 
 
@@ -74,8 +80,11 @@ const styles = StyleSheet.create({
     color: '#000',
     marginLeft: ITEM_SPACING,
     marginBottom: 15,
-    marginTop: -70,
+    marginTop: 12,
+    right: -10
   },
+  container: { width: '100%' },
+  flatList: { flex: 1 },
   listContainer: {
     paddingHorizontal: ITEM_SPACING,
     paddingBottom: 40,
@@ -84,7 +93,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: ITEM_SPACING,
   },
-  seeMoreContainer: { alignItems: 'center', marginTop: -12 },
+  seeMoreContainer: { alignItems: 'center', marginTop: 12 },
   seeMoreButton: { backgroundColor: '#000', paddingVertical: 10, paddingHorizontal: 18, borderRadius: 30 },
   seeMoreText: { color: '#fff', fontWeight: '700' },
   emptyContainer: { alignItems: 'center', paddingHorizontal: ITEM_SPACING, paddingBottom: 20 },
@@ -94,3 +103,4 @@ export default AllProducts;
 
 
 export { ALL_PRODUCTS } from '../../data/products';
+

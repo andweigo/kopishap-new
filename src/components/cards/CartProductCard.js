@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import SizePicker from '../ui/SizePicker';
 
@@ -9,25 +9,36 @@ const CartProductCard = ({
   updateItemSize,
   removeItem,
   toggleSelection,
-  pickerButtonSize = 25,
+  pickerButtonSize = 20,
 }) => {
   const displayPrice = typeof item.price === 'object' ? item.price[item.size || 'L'] ?? 0 : item.price ?? 0;
   const hasSizes = typeof item.price === 'object';
 
   return (
     <View style={styles.cartItem}>
-      <View style={[styles.imageContainer, { backgroundColor: item.color || '#FFF' }]}>
+      {/* Checkbox - Top Left */}
+      <TouchableOpacity style={styles.checkboxContainer} onPress={() => toggleSelection(item.id)}>
+        <View style={[styles.checkbox, item.selected && styles.checkboxSelected]}>
+          {item.selected && <Icon name="check" size={16} color="#fff" />}
+        </View>
+      </TouchableOpacity>
+
+      {/* Product Image - Left Side */}
+      <View style={[styles.imageContainer, { backgroundColor: item.color || '#f8f8f8' }]}>
         {item.image ? <Image source={item.image} style={styles.productImage} /> : (
-          <View style={styles.igePlaceholder}><Text style={styles.coffeeEmoji}>☕</Text></View>
+          <View style={styles.imagePlaceholder}><Text style={styles.coffeeEmoji}>☕</Text></View>
         )}
       </View>
 
+      {/* Product Details - Center */}
       <View style={styles.itemDetails}>
         <Text style={styles.itemName} numberOfLines={1}>{item.name ?? 'Unknown'}</Text>
         <Text style={styles.itemPrice}>₱{displayPrice}</Text>
 
         {hasSizes && (
-          <SizePicker value={item.size} onChange={(s) => updateItemSize(item.id, s)} compact buttonSize={pickerButtonSize} spacing={6} />
+          <View style={styles.sizePickerContainer}>
+            <SizePicker value={item.size} onChange={(s) => updateItemSize(item.id, s)} compact buttonSize={pickerButtonSize} spacing={4} />
+          </View>
         )}
 
         <View style={styles.controlsRow}>
@@ -40,40 +51,86 @@ const CartProductCard = ({
               <Text style={styles.quantityButtonText}>+</Text>
             </TouchableOpacity>
           </View>
-
-          <TouchableOpacity style={styles.deleteButton} onPress={() => removeItem(item.id)}>
-            <Icon name="trash-2" size={12} color="#fff" />
-          </TouchableOpacity>
         </View>
       </View>
 
-      <TouchableOpacity style={styles.checkboxContainer} onPress={() => toggleSelection(item.id)}>
-        <View style={[styles.checkbox, item.selected && styles.checkboxSelected]}>
-          {item.selected && <Icon name="check" size={18} color="#000" />}
-        </View>
+      {/* Delete Button - Right Side */}
+      <TouchableOpacity style={styles.deleteButton} onPress={() => removeItem(item.id)}>
+        <Icon name="trash-2" size={18} color="#e74c3c" />
       </TouchableOpacity>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  cartItem: { backgroundColor: '#B8885F', borderRadius: 30, padding: 20, marginBottom: 20, flexDirection: 'row', position: 'relative', minHeight: 140 },
-  imageContainer: { width: 100, height: 100, borderRadius: 20, marginRight: 16, justifyContent: 'center', alignItems: 'center' },
-  imagePlaceholder: { width: '100%', height: '100%', backgroundColor: '#FFF', borderRadius: 20, justifyContent: 'center', alignItems: 'center' },
-  coffeeEmoji: { fontSize: 48 },
-  productImage: { width: 90, height: 90, resizeMode: 'contain' },
-  itemDetails: { flex: 1, paddingRight: 50 },
-  itemName: { fontSize: 18, fontWeight: '600', color: '#FFF' },
-  itemPrice: { fontSize: 16, color: '#FFF', fontWeight: '700', marginBottom: 12 },
-  controlsRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  quantityInline: { flexDirection: 'row', alignItems: 'center' },
-  quantityButton: { width: 28, height: 28, borderRadius: 14, backgroundColor: '#E8DCC8', justifyContent: 'center', alignItems: 'center', marginTop: 10 },
-  quantityButtonText: { fontSize: 16, fontWeight: '600' },
-  quantity: { fontSize: 16, color: '#FFF', fontWeight: '600', marginHorizontal: 12, marginTop: 10 },
-  deleteButton: { width: 25, height: 25, borderRadius: 18, backgroundColor: '#000', justifyContent: 'center', alignItems: 'center', left: 45, marginTop: 10 },
-  checkboxContainer: { position: 'absolute', top: 20, right: 20 },
-  checkbox: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#D4C4B0', justifyContent: 'center', alignItems: 'center' },
-  checkboxSelected: { backgroundColor: '#FFF' },
+  cartItem: { 
+    backgroundColor: '#FFF', 
+    borderRadius: 12, 
+    padding: 16, 
+    marginBottom: 12, 
+    flexDirection: 'row', 
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#f0f0f0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  imageContainer: { 
+    width: 80, 
+    height: 80, 
+    borderRadius: 10, 
+    marginRight: 12, 
+    justifyContent: 'center', 
+    alignItems: 'center',
+    flexShrink: 0,
+  },
+  imagePlaceholder: { 
+    width: '100%', 
+    height: '100%', 
+    backgroundColor: '#f8f8f8', 
+    borderRadius: 10, 
+    justifyContent: 'center', 
+    alignItems: 'center' 
+  },
+  coffeeEmoji: { fontSize: 40 },
+  productImage: { width: 70, height: 70, resizeMode: 'contain' },
+  itemDetails: { flex: 1, marginRight: 8 },
+  itemName: { fontSize: 14, fontWeight: '600', color: '#2c3e50', marginBottom: 4 },
+  itemPrice: { fontSize: 14, color: '#27ae60', fontWeight: '700', marginBottom: 8 },
+  sizePickerContainer: { marginBottom: 8,     right: 35 },
+  controlsRow: { flexDirection: 'row', alignItems: 'center' },
+  quantityInline: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f8f8f8', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 6 },
+  quantityButton: { width: 24, height: 24, borderRadius: 6, backgroundColor: '#FFF', justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: '#e0e0e0' },
+  quantityButtonText: { fontSize: 14, fontWeight: '600', color: '#2c3e50' },
+  quantity: { fontSize: 13, color: '#2c3e50', fontWeight: '600', marginHorizontal: 10 },
+  deleteButton: { 
+    width: 30, 
+    height: 30, 
+    borderRadius: 10, 
+    backgroundColor: '#ffe5e5',
+    justifyContent: 'center', 
+    alignItems: 'center',
+    flexShrink: 0,
+    top: 30
+  },
+  checkboxContainer: { position: 'absolute', top: 20, right: 20, zIndex: 10},
+  checkbox: { 
+    width: 24, 
+    height: 24, 
+    borderRadius: 6, 
+    borderWidth: 2,
+    borderColor: '#d0d0d0',
+    justifyContent: 'center', 
+    alignItems: 'center',
+    backgroundColor: '#FFF',
+  },
+  checkboxSelected: { 
+    backgroundColor: '#2c3e50',
+    borderColor: '#2c3e50',
+  },
 });
 
 export default CartProductCard;

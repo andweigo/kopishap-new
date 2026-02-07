@@ -1,9 +1,10 @@
 // src/components/ui/ProductCard.jsx
-import React from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
-import Icon from 'react-native-vector-icons/Feather';
 import { useNavigation } from '@react-navigation/native';
+import React from 'react';
+import { Dimensions, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import Icon from 'react-native-vector-icons/Feather';
 import { useCart } from '../../context/CartContext';
+import FavoriteButton from './FavoriteButton';
 
 const { width } = Dimensions.get('window');
 
@@ -18,15 +19,18 @@ const ProductCard = ({ item, compact = false, cardHeight }) => {
   const price = typeof item.price === 'object' ? item.price[selectedSize] ?? 0 : item.price;
 
   return (
-    <View style={[styles.productCard, { width: CARD_WIDTH, height: CARD_HEIGHT, backgroundColor: item.color || '#FFF' }]}>
+    <View style={[styles.productCard, { width: CARD_WIDTH, height: CARD_HEIGHT, backgroundColor: item.color || '#FDF5E6' }]}>
       <View style={styles.productHeader}>
         <Text style={styles.productName}>{item.name}</Text>
-        <TouchableOpacity style={styles.cartIconContainer} onPress={() => addItem(item)}>
-          <Icon name="shopping-cart" size={18} color="#000" />
-          <View style={styles.addBadge}>
-            <Text style={styles.addBadgeText}>+</Text>
-          </View>
-        </TouchableOpacity>
+        <View style={styles.iconRow}>
+          <FavoriteButton item={item} size={18} style={{ marginRight: -8 }} />
+          <TouchableOpacity style={styles.cartIconContainer} onPress={() => addItem(item)}>
+            <Icon name="shopping-cart" size={18} color="#000" />
+            <View style={styles.addBadge}>
+              <Text style={styles.addBadgeText}>+</Text>
+            </View>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <Image source={item.image} style={styles.productImage} resizeMode="contain" />
@@ -50,6 +54,7 @@ const styles = StyleSheet.create({
     padding: 20,
     marginRight: width * 0.05,
     justifyContent: 'space-between',
+    marginTop: 20,
   },
   productHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   productName: { fontSize: 18, fontWeight: '700', color: '#000' },
@@ -58,16 +63,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.7)',
+    backgroundColor: 'rgb(0, 0, 0)',
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 50,
   },
-  buyButtonPrice: { fontSize: 16, fontWeight: '700' },
-  buyButtonText: { fontSize: 16, fontWeight: '700' },
+  buyButtonPrice: { fontSize: 16, fontWeight: '700', color: '#ffff' },
+  buyButtonText: { fontSize: 16, fontWeight: '700', color: '#ffff' },
   cartIconContainer: { position: 'relative', padding: 6 },
   addBadge: { position: 'absolute', right: -6, top: -6, backgroundColor: '#000', width: 18, height: 18, borderRadius: 9, justifyContent: 'center', alignItems: 'center' },
   addBadgeText: { color: '#fff', fontSize: 12, fontWeight: '700' },
+  iconRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
 });
 
 export default ProductCard;

@@ -1,12 +1,12 @@
 import React from 'react';
 import {
-  StyleSheet,
-  View,
-  Text,
-  Image,
-  TouchableOpacity,
   Dimensions,
+  Image,
   StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -64,22 +64,19 @@ const styles = StyleSheet.create({
   },
   button: {
     backgroundColor: '#000000',
-    paddingVertical: 18,
-    paddingHorizontal: 60,
-    borderRadius: 50, 
-    width: '60%', 
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    borderRadius: 100, 
+    width: '70%', 
     alignItems: 'center',
-    elevation: 3, 
-    shadowColor: '#000', 
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    justifyContent: 'center',
   },
   buttonText: {
     color: '#FFFFFF',
-    fontSize: 20,
-    fontWeight: 'bold',
-    letterSpacing: 0.5,
+    fontSize: 14,
+    fontWeight: '600',
+    letterSpacing: 2,
+    textTransform: 'uppercase',
   },
 });
 

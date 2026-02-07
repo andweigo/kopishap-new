@@ -1,9 +1,9 @@
-import React from 'react';
-import { Text, FlatList, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { Dimensions, FlatList, StyleSheet, TouchableOpacity, View } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
-import ProductCard from '../ui/ProductCard';
-import EmptyCard from '../ui/EmptyCard';
 import { ALL_PRODUCTS } from '../sections/AllProducts';
+import EmptyCard from '../ui/EmptyCard';
+import ProductCard from '../ui/ProductCard';
 
 const { width } = Dimensions.get('window');
 const PRODUCT_CARD_WIDTH = width * 0.8;
@@ -18,7 +18,9 @@ const SeeAllCard = ({ onPress }) => (
 );
 
 
-const PastriesTab = ({ showAll = false, onSeeAll, searchQuery = '', suppressEmpty = false }) => {
+const PastriesTab = ({ route, searchQuery: propSearchQuery = '', showAll: propShowAll = false, onSeeAll, suppressEmpty = false, refreshKey = 0 }) => {
+  const [showAll, setShowAll] = useState(false);
+  const searchQuery = route?.params?.searchQuery || propSearchQuery;
   const query = (searchQuery || '').trim().toLowerCase();
   const filtered = query ? PRODUCTS.filter(p => p.name.toLowerCase().includes(query)) : PRODUCTS;
   if (filtered.length === 0 && suppressEmpty) return null;
@@ -26,26 +28,24 @@ const PastriesTab = ({ showAll = false, onSeeAll, searchQuery = '', suppressEmpt
   const data = filtered.length === 0 ? [{ id: 'empty' }] : (showAll ? productsToShow : (productsToShow.length < filtered.length ? [...productsToShow, { id: 'seeAll', seeAll: true }] : [...productsToShow]));
 
   const renderItem = ({ item }) => {
-    if (item.seeAll) return <SeeAllCard onPress={onSeeAll} />;
+    if (item.seeAll) return <SeeAllCard onPress={() => setShowAll(true)} />;
     if (item.id === 'empty') return <EmptyCard width={PRODUCT_CARD_WIDTH} height={width * 1} variant={'tab'} />;
-    return <ProductCard item={item} />;
+    return <ProductCard key={`${item.id}-${refreshKey}`} item={item} />;
   };
 
   return (
-    <FlatList
-      data={data}
-      keyExtractor={(item) => item.id}
-      renderItem={renderItem}
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      snapToInterval={PRODUCT_CARD_WIDTH + ITEM_SPACING}
-      decelerationRate="fast"
-      contentContainerStyle={styles.listContainer}
-      ListFooterComponent={
-       <Text style={styles.verticalText}>- No more products -</Text>
-
-      }
-    />
+    <View style={{ backgroundColor: '#FDF5E6', flex: 1 }}>
+      <FlatList
+        data={data}
+        keyExtractor={(item) => item.id}
+        renderItem={renderItem}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        snapToInterval={PRODUCT_CARD_WIDTH + ITEM_SPACING}
+        decelerationRate="fast"
+        contentContainerStyle={styles.listContainer}
+      />
+    </View>
   );
 };
 
@@ -89,25 +89,12 @@ const styles = StyleSheet.create({
     marginTop: 150,
     justifyContent: 'center',
     alignItems: 'center',
-
     shadowColor: '#000',
     shadowOpacity: 0.25,
     shadowOffset: { width: 0, height: 4 },
     shadowRadius: 5,
     elevation: 5,
   },
-
-verticalText: {
-  position: "absolute",
-  right: -90,   
-  top: 150,        
-  transform: [{ rotate: "-90deg" }],
-  fontSize: 14,
-  color: "#8b6547",
-  marginTop: 20
-}
-
-
 });
 
 export default PastriesTab;

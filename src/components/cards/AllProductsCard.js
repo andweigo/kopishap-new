@@ -1,12 +1,13 @@
 // src/components/cards/AllProductsCard.jsx
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import Icon from 'react-native-vector-icons/Feather';
 import { useNavigation } from '@react-navigation/native';
+import React from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import Icon from 'react-native-vector-icons/Feather';
 import { useCart } from '../../context/CartContext';
+import FavoriteButton from '../ui/FavoriteButton';
 import BaseProductCard from './BaseProductCard';
 
-const AllProductsCard = ({ item, height }) => {
+const AllProductsCard = ({ item, height, onFavoriteChange, onFavoriteRemove }) => {
   const navigation = useNavigation();
   const { addItem } = useCart();
 
@@ -25,12 +26,19 @@ const AllProductsCard = ({ item, height }) => {
   return (
     <BaseProductCard item={item} height={height}>
 
-      <TouchableOpacity style={styles.cartIcon} onPress={handleAddToCart}>
+      <TouchableOpacity
+        style={[styles.cartIcon, { right: 12 }]}
+        onPress={async () => {
+          try { handleAddToCart(); } catch (e) { console.error(e); }
+        }}
+      >
         <Icon name="shopping-cart" size={18} color="#000" />
          <View style={styles.plusBadge}>
             <Text style={styles.plusText}>+</Text>
         </View>
-    </TouchableOpacity>
+      </TouchableOpacity>
+
+      <FavoriteButton item={item} size={18} style={{ position: 'absolute', top: 9, right: 125 }} onFavoriteChange={onFavoriteChange} onBeforeRemove={onFavoriteRemove} />
 
       <TouchableOpacity style={styles.buyBtn} onPress={handleBuy} activeOpacity={0.85}>
         <Text style={styles.buyText}>Buy</Text>

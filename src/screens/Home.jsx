@@ -1,55 +1,41 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
-  StyleSheet,
-  View,
-  Text,
-  FlatList,
-  TextInput,
-  StatusBar,
-  Animated,
-  TouchableOpacity,
-  Image,
   Dimensions,
+  Image,
+  Modal,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Feather';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
-import CoffeeTab from '../components/tabs/CoffeeTab';
-import LemonadeTab from '../components/tabs/LemonadeTab';
-import PastriesTab from '../components/tabs/PastriesTab';
-import SpecialTab from '../components/tabs/SpecialTabs';
-import MerchTab from '../components/tabs/MerchTab';
-import AllProducts, { ALL_PRODUCTS } from '../components/sections/AllProducts';
-import useAutoHideBottomNav from '../hooks/useAutoHideBottomNav';
-import { useCart } from '../context/CartContext';
+import AllProducts from '../components/sections/AllProducts';
 import BottomNav from '../components/ui/BottomNav';
+import FeedbacksSection from '../components/ui/FeedbacksSection';
+import { useCart } from '../context/CartContext';
+import useCurrentUser from '../hooks/useCurrentUser';
+import useUserPreferences from '../hooks/useUserPreferences';
+import ProductTabNavigator from '../navigations/ProductTabNavigator';
+import UserService from '../services/UserService';
 
 const { width } = Dimensions.get('window');
-const ITEM_SPACING = width * 0.05;
 
-const CATEGORIES = ['Coffee', 'Lemonade', 'Pastries', 'Specials', 'Merchs'];
-
-const CategoryPill = ({ title, isActive, onPress }) => (
-  <TouchableOpacity
-    onPress={onPress}
-    activeOpacity={0.8}
-    style={[styles.categoryPill, isActive && styles.categoryPillActive]}
-  >
-    <Text style={isActive ? styles.categoryTextActive : styles.categoryText}>{title}</Text>
-  </TouchableOpacity>
-);
-
-const PlaceholderCard = ({ title }) => (
-  <View style={styles.placeholderCard}>
-    <Image source={require('../imgs/coffee/americano.png')} style={styles.productImage} />
-    <Text style={styles.placeholderText}>No tab implemented for "{title}" yet.</Text>
-  </View>
-);
-
-const HomeHeader = ({ activeCategory, setActiveCategory, renderTabContent, searchQuery, setSearchQuery, navigation, userName }) => (
+/**
+ * HomeHeader - Header component with search, menu, and navigation
+ * Displays greeting, search bar, and navigation buttons
+ */
+const HomeHeader = ({ searchQuery, setSearchQuery, navigation, userName }) => (
   <View>
     <View style={styles.header}>
-      <View>
+      <TouchableOpacity onPress={() => navigation.openDrawer()} activeOpacity={0.7}>
+        <Icon name="menu" size={28} color="#FFF" />
+      </TouchableOpacity>
+      <View style={styles.headerTitleContainer}>
         <Text style={styles.greeting}>
           {userName ? `Welcome, ${userName}!` : 'Welcome!'}
         </Text>
@@ -58,8 +44,9 @@ const HomeHeader = ({ activeCategory, setActiveCategory, renderTabContent, searc
       <TouchableOpacity
         style={styles.profileIconContainer}
         onPress={() => navigation.navigate('Settings')}
+        activeOpacity={0.7}
       >
-        <Icon name="user" size={30} color="#FFF" />
+        <Image source={require('../imgs/logo.png')} style={{ width: '100%', height: '100%', borderRadius: 8 }} resizeMode="contain" />
       </TouchableOpacity>
     </View>
 
@@ -71,6 +58,7 @@ const HomeHeader = ({ activeCategory, setActiveCategory, renderTabContent, searc
         onChangeText={setSearchQuery}
         style={styles.searchTextInput}
         returnKeyType="search"
+        placeholderTextColor="#95a5a6"
       />
       {searchQuery ? (
         <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.searchClearButton}>
@@ -78,149 +66,298 @@ const HomeHeader = ({ activeCategory, setActiveCategory, renderTabContent, searc
         </TouchableOpacity>
       ) : null}
     </View>
-
-    <View style={styles.featContainer}>
-      <Text style={styles.featText}>Featured</Text>
-    </View>
-
-    <FlatList
-      data={CATEGORIES}
-      keyExtractor={(item) => item}
-      renderItem={({ item }) => (
-        <CategoryPill
-          title={item}
-          isActive={item === activeCategory}
-          onPress={() => setActiveCategory(item)}
-        />
-      )}
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      style={styles.categoryList}
-      contentContainerStyle={styles.categoryListContainer}
-    />
-
-    <View style={styles.tabContent}>{renderTabContent()}</View>
-
-    <View style={styles.extraSpace} />
   </View>
 );
 
-const Home = ({ route }) => {
-  const { userName } = route.params || {}; 
-  const [activeCategory, setActiveCategory] = useState(CATEGORIES[0]);
-  const [showAllCoffee, setShowAllCoffee] = useState(false);
-  const [showAllLemonade, setShowAllLemonade] = useState(false);
-  const [showAllPastries, setShowAllPastries] = useState(false);
+const Home = ({ navigation, route }) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const { visible, onScroll } = useAutoHideBottomNav();
   const [activeTab, setActiveTab] = useState('home');
+  const [showWelcomeModal, setShowWelcomeModal] = useState(true);
+  const [userDiscount, setUserDiscount] = useState(0);
   const { cartItems } = useCart();
-  const navigation = useNavigation();
-  const anim = useRef(new Animated.Value(0));
+  const { user } = useCurrentUser();
+  const userName = user?.name || route?.params?.userName || '';
+  
+  // Use hook for user preferences
+  const { userPreferences, loadPreferences } = useUserPreferences();
+  const preferredCategory = userPreferences && userPreferences.length > 0 ? userPreferences[0] : null;
+
+  // Generate and show discount on initial mount
+  useEffect(() => {
+    const generateDiscount = async () => {
+      const discount = await UserService.generateAndStoreDiscount();
+      if (discount > 0) {
+        setUserDiscount(discount);
+        setShowWelcomeModal(true);
+      }
+    };
+    generateDiscount();
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
+      loadPreferences();
       setActiveTab('home');
-    }, [])
+    }, [loadPreferences])
   );
-
-  useEffect(() => {
-    Animated.timing(anim.current, {
-      toValue: visible ? 0 : 1,
-      duration: 180,
-      useNativeDriver: true,
-    }).start();
-  }, [visible]);
-
-  const handleSeeAllCoffee = () => setShowAllCoffee(true);
-  const handleSeeAllLemonade = () => setShowAllLemonade(true);
-  const handleSeeAllPastries = () => setShowAllPastries(true);
-
-  const query = (searchQuery || '').trim().toLowerCase();
-  const globalHasMatches = query ? ALL_PRODUCTS.some(p => p.name.toLowerCase().includes(query)) : true;
-
-  const renderTabContent = () => {
-    const suppressEmpty = !!(query && !globalHasMatches);
-    switch (activeCategory) {
-      case 'Coffee':
-        return <CoffeeTab showAll={showAllCoffee} onSeeAll={handleSeeAllCoffee} searchQuery={searchQuery} suppressEmpty={suppressEmpty} />;
-      case 'Lemonade':
-        return <LemonadeTab showAll={showAllLemonade} onSeeAll={handleSeeAllLemonade} searchQuery={searchQuery} suppressEmpty={suppressEmpty} />;
-      case 'Pastries':
-        return <PastriesTab showAll={showAllPastries} onSeeAll={handleSeeAllPastries} searchQuery={searchQuery} suppressEmpty={suppressEmpty} />;
-      case 'Specials':
-        return <SpecialTab searchQuery={searchQuery} suppressEmpty={suppressEmpty} />;
-      case 'Merchs':
-        return <MerchTab searchQuery={searchQuery} suppressEmpty={suppressEmpty} />;
-      default:
-        return <PlaceholderCard title={activeCategory} />;
-    }
-  };
 
   const cartItemCount = cartItems.reduce((sum, item) => sum + (item.quantity || 1), 0);
 
   return (
-    <SafeAreaView style={styles.safeAreaContainer}>
+    <SafeAreaView style={styles.safeAreaContainer} edges={['top', 'left', 'right']}>
       <StatusBar barStyle="dark-content" backgroundColor="#FDF5E6" />
 
-      <FlatList
-        data={[]}
-        ListHeaderComponent={
-          <HomeHeader
-            activeCategory={activeCategory}
-            setActiveCategory={setActiveCategory}
-            renderTabContent={renderTabContent}
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            navigation={navigation}
-            userName={userName} 
-          />
-        }
-        ListFooterComponent={<AllProducts onScroll={onScroll} searchQuery={searchQuery} setSearchQuery={setSearchQuery} />}
-        onScroll={onScroll}
-        scrollEventThrottle={16}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContentContainer}
-        style={styles.scrollView}
-      />
+      {/* Fixed Header */}
+      <View style={styles.fixedHeader}>
+        <HomeHeader
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          navigation={navigation}
+          userName={userName}
+        />
+      </View>
 
-      <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} cartItemCount={cartItemCount} />
+      {/* Scrollable content container */}
+      <ScrollView 
+        style={styles.scrollViewContainer}
+        contentContainerStyle={{ paddingBottom: 110 }}
+        showsVerticalScrollIndicator={false}
+        scrollEventThrottle={16}
+      >
+        {/* Categories heading */}
+        <View style={styles.featContainer}>
+          <Text style={styles.featText}>Categories</Text>
+        </View>
+
+        {/* Top Tab Navigator for Product Categories */}
+        <View style={styles.tabWrapper}>
+          <ProductTabNavigator searchQuery={searchQuery} initialTab={preferredCategory} />
+        </View>
+
+        {/* All products section beneath the tabs */}
+        <View style={styles.allProductsWrapper}>
+          <AllProducts searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
+        </View>
+
+        {/* Reviews and Feedbacks Section */}
+        <FeedbacksSection />
+      </ScrollView>
+
+      <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
+
+      {/* Welcome Modal with Discount */}
+      <Modal
+        visible={showWelcomeModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowWelcomeModal(false)}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Icon name="gift" size={48} color="#000000" />
+            </View>
+            
+            <Text style={styles.modalTitle}>Welcome to Kape Doon!</Text>
+            
+            <View style={styles.discountBadge}>
+              <Text style={styles.discountText}>{userDiscount}% OFF</Text>
+            </View>
+            
+            <Text style={styles.modalMessage}>
+              We're thrilled to have you here! Enjoy a special discount on your first order. Explore our selection of specialty drinks, delicious pastries, and more.
+            </Text>
+            
+            <TouchableOpacity
+              style={styles.modalButton}
+              onPress={() => setShowWelcomeModal(false)}
+            >
+              <Text style={styles.modalButtonText}>Start Shopping</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  safeAreaContainer: { flex: 1, backgroundColor: '#FDF5E6' },
-  scrollView: { flex: 1, paddingTop: 10 },
-  scrollContentContainer: { paddingBottom: 120 },
+  safeAreaContainer: {
+    flex: 1,
+    backgroundColor: '#FDF5E6',
+  },
 
-  featContainer: { paddingHorizontal: 30, paddingBottom: 10 },
-  featText: { fontWeight: 'bold', fontSize: 17, color: '#000' },
+  fixedHeader: {
+    backgroundColor: '#FDF5E6',
+    zIndex: 10,
+  },
 
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, marginBottom: 20 },
-  greeting: { fontSize: 18, marginTop: 15, color: '#000', fontWeight: '400' },
-  subHeading: { fontSize: 22, fontWeight: 'bold', color: '#000' },
-  profileIconContainer: { width: 44, height: 44, marginTop: 15, borderRadius: 22, backgroundColor: '#000', justifyContent: 'center', alignItems: 'center' },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    backgroundColor: '#030303ff',
+  },
 
-  searchBar: { flexDirection: 'row', alignItems: 'center', height: 50, borderRadius: 15, backgroundColor: '#EBEBEB', marginHorizontal: 20, marginBottom: 10 },
-  searchIcon: { paddingHorizontal: 10 },
-  searchTextInput: { flex: 1, paddingVertical: 12, fontSize: 16, color: '#000' },
-  searchClearButton: { paddingHorizontal: 12, paddingVertical: 8 },
+  headerTitleContainer: {
+    flex: 1,
+    marginLeft: 15,
+  },
 
-  categoryList: { marginBottom: 30, height: 40 },
-  categoryListContainer: { paddingHorizontal: 20 },
-  categoryPill: { paddingHorizontal: 25, paddingVertical: 8, borderRadius: 20, backgroundColor: '#EBEBEB', marginRight: 10, justifyContent: 'center', alignItems: 'center' },
-  categoryPillActive: { backgroundColor: '#000' },
-  categoryText: { color: '#000', fontWeight: '500' },
-  categoryTextActive: { color: '#FFF', fontWeight: '500' },
+  greeting: {
+    fontSize: 13,
+    color: '#ecf0f1',
+    fontWeight: '400',
+    marginBottom: 2,
+  },
 
-  tabContent: { paddingHorizontal: ITEM_SPACING },
+  subHeading: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FFF',
+  },
 
-  placeholderCard: { width: width * 0.8, height: width * 1.1, borderRadius: 30, padding: 30, marginRight: ITEM_SPACING, justifyContent: 'center', alignItems: 'center', backgroundColor: '#EBEBEB', alignSelf: 'center' },
-  placeholderText: { fontSize: 18, color: '#333', marginTop: 10 },
-  productImage: { width: '100%', height: '60%', resizeMode: 'contain' },
+  profileIconContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
 
-  extraSpace: { height: 100 },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 45,
+    borderRadius: 12,
+    backgroundColor: '#FFF',
+    marginHorizontal: 15,
+    marginVertical: 12,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: '#ecf0f1',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+
+  searchIcon: {
+    marginRight: 8,
+  },
+
+  searchTextInput: {
+    flex: 1,
+    paddingVertical: 8,
+    fontSize: 14,
+    color: '#2c3e50',
+  },
+
+  searchClearButton: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+
+  featContainer: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+  },
+
+  featText: {
+    fontWeight: '700',
+    fontSize: 16,
+    color: '#2c3e50',
+  },
+
+  scrollViewContainer: {
+    flex: 1,
+  },
+
+  tabWrapper: {
+    height: 460,
+
+  },
+
+  allProductsWrapper: {
+    minHeight: 500,
+    marginTop: 20,
+    marginBottom: -80,
+    paddingBottom: 100,
+  },
+
+  // Welcome Modal Styles
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    paddingVertical: 40,
+    paddingHorizontal: 28,
+    alignItems: 'center',
+    maxWidth: 320,
+    width: '100%',
+  },
+
+  modalHeader: {
+    marginBottom: 20,
+  },
+
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#000000',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+
+  discountBadge: {
+    backgroundColor: '#FFF3CD',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    marginBottom: 20,
+    borderWidth: 2,
+    borderColor: '#FFD700',
+  },
+
+  discountText: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#000000',
+  },
+
+  modalMessage: {
+    fontSize: 14,
+    color: '#666666',
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 32,
+    fontWeight: '400',
+  },
+
+  modalButton: {
+    backgroundColor: '#000000',
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    width: '100%',
+    alignItems: 'center',
+  },
+
+  modalButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
 });
 
 export default Home;

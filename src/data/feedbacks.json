@@ -1,0 +1,164 @@
+[
+  {
+    "id": 1,
+    "name": "Maria Santos",
+    "comment": "Best coffee I've had in the city! The ambiance is so cozy and the staff is incredibly friendly. Will definitely come back!",
+    "serviceRating": 5,
+    "itemsRating": 5,
+    "date": "2025-12-15"
+  },
+  {
+    "id": 2,
+    "name": "Carlos Mendoza",
+    "comment": "Great espresso shots and the pastries are fresh every time. Service could be a bit faster during rush hours though.",
+    "serviceRating": 4,
+    "itemsRating": 5,
+    "date": "2025-12-10"
+  },
+  {
+    "id": 3,
+    "name": "Anna Cruz",
+    "comment": "The cappuccino was perfectly executed. Loved the latte art! The WiFi is also reliable for working. Highly recommended!",
+    "serviceRating": 5,
+    "itemsRating": 5,
+    "date": "2025-12-08"
+  },
+  {
+    "id": 4,
+    "name": "Robert Kim",
+    "comment": "Good quality coffee at reasonable prices. The baristas are knowledgeable about different brewing methods. Very satisfied!",
+    "serviceRating": 4,
+    "itemsRating": 4,
+    "date": "2025-12-05"
+  },
+  {
+    "id": 5,
+    "name": "Sophie Laurent",
+    "comment": "Absolutely love the seasonal specials! The staff remembers my order and always gives me a warm welcome. Feel like family here!",
+    "serviceRating": 5,
+    "itemsRating": 5,
+    "date": "2025-12-01"
+  },
+  {
+    "id": 6,
+    "name": "Diego Martinez",
+    "comment": "Nice place to hang out. Coffee is good but a bit pricey. Service is friendly and quick.",
+    "serviceRating": 4,
+    "itemsRating": 4,
+    "date": "2025-11-25"
+  },
+  {
+    "id": 7,
+    "name": "Lisa Wong",
+    "comment": "The cold brew is refreshing and smooth. Perfect for hot days. Also tried their new avocado toast - delicious!",
+    "serviceRating": 5,
+    "itemsRating": 5,
+    "date": "2025-11-20"
+  },
+  {
+    "id": 8,
+    "name": "James O'Brien",
+    "comment": "Came here for the third time this week. The atmosphere is unbeatable. Staff is always smiling and helpful.",
+    "serviceRating": 5,
+    "itemsRating": 4,
+    "date": "2025-11-18"
+  },
+  {
+    "id": 9,
+    "name": "Elena Rossi",
+    "comment": "Quality coffee beans are evident in every cup. The tiramisu pairs perfectly with the espresso. Definitely recommend!",
+    "serviceRating": 4,
+    "itemsRating": 5,
+    "date": "2025-11-15"
+  },
+  {
+    "id": 10,
+    "name": "Michael Chang",
+    "comment": "Great customer service! I had a special request and they accommodated it perfectly. The iced latte is my new favorite!",
+    "serviceRating": 5,
+    "itemsRating": 5,
+    "date": "2025-11-12"
+  },
+  {
+    "id": 11,
+    "name": "Daniel Reyes",
+    "comment": "The mocha was rich and not too sweet, exactly how I like it. Seating can get a bit crowded in the afternoon.",
+    "serviceRating": 4,
+    "itemsRating": 5,
+    "date": "2025-11-10"
+  },
+  {
+    "id": 12,
+    "name": "Aisha Khan",
+    "comment": "Very relaxing place to unwind after work. The jazz playlist adds to the vibe. Coffee quality is consistently great.",
+    "serviceRating": 5,
+    "itemsRating": 4,
+    "date": "2025-11-08"
+  },
+  {
+    "id": 13,
+    "name": "Paul Hernandez",
+    "comment": "Tried the caramel macchiato and it exceeded my expectations. Friendly staff and clean environment.",
+    "serviceRating": 5,
+    "itemsRating": 5,
+    "date": "2025-11-06"
+  },
+  {
+    "id": 14,
+    "name": "Nina Patel",
+    "comment": "Love that they offer dairy-free milk options. The oat milk latte is creamy and delicious!",
+    "serviceRating": 5,
+    "itemsRating": 5,
+    "date": "2025-11-04"
+  },
+  {
+    "id": 15,
+    "name": "Kevin Thompson",
+    "comment": "Good coffee and pastries. Service is solid, but parking nearby can be a challenge.",
+    "serviceRating": 4,
+    "itemsRating": 4,
+    "date": "2025-11-02"
+  },
+  {
+    "id": 16,
+    "name": "Isabella Moore",
+    "comment": "The matcha latte is one of the best I’ve had. Not bitter at all and perfectly balanced.",
+    "serviceRating": 5,
+    "itemsRating": 5,
+    "date": "2025-10-30"
+  },
+  {
+    "id": 17,
+    "name": "Andre Silva",
+    "comment": "Staff is attentive and polite. Coffee tastes fresh, though I wish cups were a bit bigger.",
+    "serviceRating": 4,
+    "itemsRating": 4,
+    "date": "2025-10-28"
+  },
+  {
+    "id": 18,
+    "name": "Hannah Lee",
+    "comment": "Perfect study spot! Quiet in the mornings and the WiFi speed is great. Coffee keeps me focused.",
+    "serviceRating": 5,
+    "itemsRating": 4,
+    "date": "2025-10-25"
+  },
+  {
+    "id": 19,
+    "name": "Marco Bianchi",
+    "comment": "Espresso has a strong, authentic flavor. Reminds me of cafes back home in Italy.",
+    "serviceRating": 4,
+    "itemsRating": 5,
+    "date": "2025-10-22"
+  },
+  {
+    "id": 20,
+    "name": "Rachel Green",
+    "comment": "Warm atmosphere, great lighting, and amazing drinks. This place quickly became my go-to café.",
+    "serviceRating": 5,
+    "itemsRating": 5,
+    "date": "2025-10-20"
+  }
+]
+
+
