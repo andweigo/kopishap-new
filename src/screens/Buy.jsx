@@ -49,8 +49,8 @@ const Buy = ({ navigation, route }) => {
     };
 
   const hasSizes = typeof product.price === 'object';
-  const currentPrice = getItemPrice(product);
-  const totalPrice = getItemTotal(product);
+  const currentPrice = hasSizes ? (product.price[selectedSize] || 0) : (product.price || 0);
+  const totalPrice = currentPrice * quantity;
 
   const handleBackPress = useCallback(() => {
     navigation.goBack();

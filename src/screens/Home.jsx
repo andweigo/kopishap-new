@@ -1,86 +1,47 @@
 import { useFocusEffect } from '@react-navigation/native';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   Dimensions,
-  Image,
   Modal,
   ScrollView,
   StatusBar,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Feather';
 import AllProducts from '../components/sections/AllProducts';
+import FeedbacksSection from '../components/sections/FeedbacksSection';
+import { storage } from '../components/storage';
 import BottomNav from '../components/ui/BottomNav';
-import FeedbacksSection from '../components/ui/FeedbacksSection';
+import HomeHeader from '../components/ui/HomeHeader';
+import SearchResultsModal from '../components/ui/SearchResultsModal';
+import { CATEGORIES, CATEGORY_STORAGE_KEY, DEFAULT_CATEGORY, SEARCH_INTENT_KEY } from '../constants/categories';
 import { useCart } from '../context/CartContext';
+import { ALL_PRODUCTS } from '../data/products';
 import useCurrentUser from '../hooks/useCurrentUser';
-import useUserPreferences from '../hooks/useUserPreferences';
 import ProductTabNavigator from '../navigations/ProductTabNavigator';
 import UserService from '../services/UserService';
 
 const { width } = Dimensions.get('window');
 
-/**
- * HomeHeader - Header component with search, menu, and navigation
- * Displays greeting, search bar, and navigation buttons
- */
-const HomeHeader = ({ searchQuery, setSearchQuery, navigation, userName }) => (
-  <View>
-    <View style={styles.header}>
-      <TouchableOpacity onPress={() => navigation.openDrawer()} activeOpacity={0.7}>
-        <Icon name="menu" size={28} color="#FFF" />
-      </TouchableOpacity>
-      <View style={styles.headerTitleContainer}>
-        <Text style={styles.greeting}>
-          {userName ? `Welcome, ${userName}!` : 'Welcome!'}
-        </Text>
-        <Text style={styles.subHeading}>Let's start an order</Text>
-      </View>
-      <TouchableOpacity
-        style={styles.profileIconContainer}
-        onPress={() => navigation.navigate('Settings')}
-        activeOpacity={0.7}
-      >
-        <Image source={require('../imgs/logo.png')} style={{ width: '100%', height: '100%', borderRadius: 8 }} resizeMode="contain" />
-      </TouchableOpacity>
-    </View>
-
-    <View style={styles.searchBar}>
-      <Icon name="search" size={20} color="#888" style={styles.searchIcon} />
-      <TextInput
-        placeholder="Search products"
-        value={searchQuery}
-        onChangeText={setSearchQuery}
-        style={styles.searchTextInput}
-        returnKeyType="search"
-        placeholderTextColor="#95a5a6"
-      />
-      {searchQuery ? (
-        <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.searchClearButton}>
-          <Icon name="x" size={18} color="#888" />
-        </TouchableOpacity>
-      ) : null}
-    </View>
-  </View>
-);
-
 const Home = ({ navigation, route }) => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [suggestions, setSuggestions] = useState([]);
   const [activeTab, setActiveTab] = useState('home');
-  const [showWelcomeModal, setShowWelcomeModal] = useState(true);
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const [userDiscount, setUserDiscount] = useState(0);
+  // State to hold the initial category. `null` means it's loading.
+  const [initialCategory, setInitialCategory] = useState(null);
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearchModalVisible, setIsSearchModalVisible] = useState(false);
+
   const { cartItems } = useCart();
   const { user } = useCurrentUser();
   const userName = user?.name || route?.params?.userName || '';
-  
-  // Use hook for user preferences
-  const { userPreferences, loadPreferences } = useUserPreferences();
-  const preferredCategory = userPreferences && userPreferences.length > 0 ? userPreferences[0] : null;
 
   // Generate and show discount on initial mount
   useEffect(() => {
@@ -94,12 +55,77 @@ const Home = ({ navigation, route }) => {
     generateDiscount();
   }, []);
 
+  // This effect runs ONCE on mount to load the stored category preference.
+  // This ensures the Top Tab Navigator initializes with the correct tab.
+  useEffect(() => {
+    const loadInitialCategory = async () => {
+      // 1. Check for a temporary "Search Intent" first (high priority)
+      const searchIntent = await storage.getItem(SEARCH_INTENT_KEY);
+      
+      let startCategory = null;
+
+      if (searchIntent && searchIntent.category && CATEGORIES.includes(searchIntent.category)) {
+        startCategory = searchIntent.category;
+        // Clear the intent so it only applies once
+        await storage.removeItem(SEARCH_INTENT_KEY);
+      } else {
+        // 2. If no search intent, fall back to saved preference
+        const savedCategory = await storage.getItem(CATEGORY_STORAGE_KEY);
+        startCategory = savedCategory || DEFAULT_CATEGORY;
+      }
+
+      // Set the state. This will trigger a re-render and display the navigator.
+      setInitialCategory(startCategory);
+    };
+
+    loadInitialCategory();
+  }, []); // Empty array ensures this runs only once.
+
   useFocusEffect(
     useCallback(() => {
-      loadPreferences();
       setActiveTab('home');
-    }, [loadPreferences])
+    }, [])
   );
+
+  /**
+   * Handles selecting a product from the search results modal.
+   * It closes the modal, clears the search, and navigates to the Buy screen.
+   */
+  const handleProductSelect = (product) => {
+    setIsSearchModalVisible(false);
+    setSearchQuery('');
+    setSearchResults([]);
+    navigation.navigate('Buy', { product });
+  };
+
+  const handleSuggestionPress = (product) => {
+    setSearchQuery(product.name);
+    setSuggestions([]);
+    setSearchResults([product]);
+    setIsSearchModalVisible(true);
+  };
+
+  /**
+   * Handles text input in the main search bar.
+   * Filters products and shows suggestions.
+   */
+  const handleSearch = (text) => {
+    setSearchQuery(text);
+
+    // Hide modal while typing to show suggestions
+    if (isSearchModalVisible) {
+      setIsSearchModalVisible(false);
+    }
+
+    if (text.length > 0) {
+      const matches = ALL_PRODUCTS.filter(p =>
+        p.name.toLowerCase().includes(text.toLowerCase())
+      ).slice(0, 5);
+      setSuggestions(matches);
+    } else {
+      setSuggestions([]);
+    }
+  };
 
   const cartItemCount = cartItems.reduce((sum, item) => sum + (item.quantity || 1), 0);
 
@@ -111,10 +137,26 @@ const Home = ({ navigation, route }) => {
       <View style={styles.fixedHeader}>
         <HomeHeader
           searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
+          setSearchQuery={handleSearch}
           navigation={navigation}
           userName={userName}
         />
+        {suggestions.length > 0 && (
+          <View style={styles.suggestionsContainer}>
+            {suggestions.map((item, index) => (
+              <TouchableOpacity
+                key={item.id}
+                style={[
+                  styles.suggestionItem,
+                  index === suggestions.length - 1 && { borderBottomWidth: 0 },
+                ]}
+                onPress={() => handleSuggestionPress(item)}
+              >
+                <Text style={styles.suggestionText}>{item.name}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
       </View>
 
       {/* Scrollable content container */}
@@ -131,17 +173,36 @@ const Home = ({ navigation, route }) => {
 
         {/* Top Tab Navigator for Product Categories */}
         <View style={styles.tabWrapper}>
-          <ProductTabNavigator searchQuery={searchQuery} initialTab={preferredCategory} />
+          {/* Conditionally render the navigator ONLY after the initial category is loaded */}
+          {initialCategory ? (
+            <ProductTabNavigator
+              // Pass an empty search query to prevent tabs from filtering
+              searchQuery=""
+              initialTab={initialCategory}
+            />
+          ) : (
+            // Show a loading indicator while fetching the preference
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#030303ff" />
+            </View>
+          )}
         </View>
 
         {/* All products section beneath the tabs */}
         <View style={styles.allProductsWrapper}>
-          <AllProducts searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
+          <AllProducts searchQuery="" setSearchQuery={() => {}} />
         </View>
 
         {/* Reviews and Feedbacks Section */}
         <FeedbacksSection />
       </ScrollView>
+
+      <SearchResultsModal
+        visible={isSearchModalVisible}
+        results={searchResults}
+        onClose={() => setIsSearchModalVisible(false)}
+        onProductSelect={handleProductSelect}
+      />
 
       <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
 
@@ -187,78 +248,43 @@ const styles = StyleSheet.create({
     backgroundColor: '#FDF5E6',
   },
 
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: 460, // Match the tab wrapper height
+  },
+
   fixedHeader: {
     backgroundColor: '#FDF5E6',
     zIndex: 10,
   },
 
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-    backgroundColor: '#030303ff',
-  },
-
-  headerTitleContainer: {
-    flex: 1,
-    marginLeft: 15,
-  },
-
-  greeting: {
-    fontSize: 13,
-    color: '#ecf0f1',
-    fontWeight: '400',
-    marginBottom: 2,
-  },
-
-  subHeading: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#FFF',
-  },
-
-  profileIconContainer: {
-    width: 50,
-    height: 50,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    height: 45,
-    borderRadius: 12,
+  suggestionsContainer: {
     backgroundColor: '#FFF',
     marginHorizontal: 15,
-    marginVertical: 12,
-    paddingHorizontal: 12,
+    marginTop: -10,
+    marginBottom: 10,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: '#ecf0f1',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    shadowRadius: 4,
+    elevation: 3,
   },
 
-  searchIcon: {
-    marginRight: 8,
+  suggestionItem: {
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
   },
 
-  searchTextInput: {
-    flex: 1,
-    paddingVertical: 8,
+  suggestionText: {
     fontSize: 14,
     color: '#2c3e50',
-  },
-
-  searchClearButton: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
   },
 
   featContainer: {
@@ -277,7 +303,7 @@ const styles = StyleSheet.create({
   },
 
   tabWrapper: {
-    height: 460,
+    height: 500,
 
   },
 

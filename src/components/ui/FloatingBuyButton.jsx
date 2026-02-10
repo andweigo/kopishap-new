@@ -9,6 +9,7 @@ const FloatingBuyButton = ({ items, buttonLabel, onPress }) => {
       <TouchableOpacity
         style={styles.floatingBuyButton}
         activeOpacity={0.9}
+        disabled={totalQuantity === 0}
         onPress={onPress}
       >
         <Text style={styles.floatingBuyText}>{buttonLabel}({totalQuantity})</Text>

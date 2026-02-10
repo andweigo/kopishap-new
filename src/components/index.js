@@ -19,7 +19,9 @@ export { default as ProductCard } from './ui/ProductCard';
 export { default as SizePicker } from './ui/SizePicker';
 
 // Sections
+export { default as AddFeedbackForm } from './sections/AddFeedbackForm';
 export { default as AllProducts } from './sections/AllProducts';
+export { default as FeedbacksSection } from './sections/FeedbacksSection';
 
 // Tabs
 export { default as CoffeeTab } from './tabs/CoffeeTab';

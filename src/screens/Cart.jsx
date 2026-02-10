@@ -36,7 +36,10 @@ const SelectAllHeader = ({ isSelected, onToggle, label = "Select All" }) => (
   </TouchableOpacity>
 );
 
-const AllTab = ({ items, cartProps, onBuyPress, buttonLabel, isAllSelected, onSelectAll }) => (
+const AllTab = ({ items, cartProps, onBuyPress, buttonLabel, isAllSelected, onSelectAll }) => {
+  const selectedItems = items.filter(item => item.selected);
+  
+  return (
   <View style={{ flex: 1 }}>
     <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 20, paddingBottom: 520, backgroundColor: '#FDF5E6' }} showsVerticalScrollIndicator={false}>
       {items.length > 0 && <SelectAllHeader isSelected={isAllSelected} onToggle={onSelectAll} />}
@@ -50,11 +53,14 @@ const AllTab = ({ items, cartProps, onBuyPress, buttonLabel, isAllSelected, onSe
         <CartProductCard key={item.id} item={item} {...cartProps} />
       ))}
     </ScrollView>
-    {items.length > 0 && <FloatingBuyButton items={items} buttonLabel={buttonLabel} onPress={onBuyPress} />}
+    {items.length > 0 && <FloatingBuyButton items={selectedItems} buttonLabel={buttonLabel} onPress={() => onBuyPress(selectedItems)} />}
   </View>
 );
+}
 
-const OrdersTab = ({ items, cartProps, onBuyPress, buttonLabel, isAllSelected, onSelectAll }) => (
+const OrdersTab = ({ items, cartProps, onBuyPress, buttonLabel, isAllSelected, onSelectAll }) => {
+  const selectedItems = items.filter(item => item.selected);
+  return (
   <View style={{ flex: 1 }}>
     <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 20, paddingBottom: 600, backgroundColor: '#FDF5E6' }} showsVerticalScrollIndicator={false}>
       {items.length > 0 && <SelectAllHeader isSelected={isAllSelected} onToggle={onSelectAll} />}
@@ -67,9 +73,10 @@ const OrdersTab = ({ items, cartProps, onBuyPress, buttonLabel, isAllSelected, o
         <CartProductCard key={item.id} item={item} {...cartProps} />
       ))}
     </ScrollView>
-    {items.length > 0 && <FloatingBuyButton items={items} buttonLabel={buttonLabel} onPress={onBuyPress} />}
+    {items.length > 0 && <FloatingBuyButton items={selectedItems} buttonLabel={buttonLabel} onPress={() => onBuyPress(selectedItems)} />}
   </View>
 );
+}
 
 const OrderStatusBadge = ({ status }) => {
   const getStatusColor = () => {
@@ -213,6 +220,10 @@ export default function KapeCart() {
   const ordersTabQuantity = (itemsNotCheckedOut || []).reduce((acc, item) => acc + (item.quantity || 0), 0);
 
   const handleBuyPress = (itemsToBuy) => {
+    if (itemsToBuy.length === 0) {
+      return; // Do nothing if no items selected
+    }
+
     const itemsToCheckout = itemsToBuy.map(item => ({
       ...item,
       price: getItemPrice(item),
@@ -266,7 +277,7 @@ export default function KapeCart() {
               items={cartItems} 
               cartProps={cartProps} 
               buttonLabel="Buy Now " 
-              onBuyPress={() => handleBuyPress(cartItems)} 
+              onBuyPress={handleBuyPress} 
               isAllSelected={isAllSelected(cartItems)}
               onSelectAll={() => handleSelectAll(cartItems)}
             />
@@ -278,7 +289,7 @@ export default function KapeCart() {
               items={itemsNotCheckedOut} 
               cartProps={cartProps} 
               buttonLabel="Buy Now " 
-              onBuyPress={() => handleBuyPress(itemsNotCheckedOut)}
+              onBuyPress={handleBuyPress}
               isAllSelected={isAllSelected(itemsNotCheckedOut)}
               onSelectAll={() => handleSelectAll(itemsNotCheckedOut)}
             />

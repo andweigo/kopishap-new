@@ -1,7 +1,6 @@
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import React, { useCallback, useState } from 'react';
 import {
-  BackHandler,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -17,6 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Feather';
 import ModalButton from '../components/buttons/ModalButton';
 import BottomNav from '../components/ui/BottomNav';
+import useBackHandler from '../hooks/useBackHandler';
 import useCurrentUser from '../hooks/useCurrentUser';
 import useModal from '../hooks/useModal';
 import useToast from '../hooks/useToast';
@@ -69,25 +69,18 @@ const SettingsScreen = () => {
   );
 
   // Handle Android hardware back button
-  useFocusEffect(
-    useCallback(() => {
-      const onBackPress = () => {
-        if (activeSection) {
-          setActiveSection(null);
-          return true;
-        }
-        if (navigation.canGoBack()) {
-          navigation.goBack();
-          return true;
-        }
-        navigation.navigate('HomeStack');
-        return true;
-      };
-
-      const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
-      return () => subscription.remove();
-    }, [activeSection, navigation])
-  );
+  useBackHandler(() => {
+    if (activeSection) {
+      setActiveSection(null);
+      return true;
+    }
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+      return true;
+    }
+    navigation.navigate('HomeStack');
+    return true;
+  });
 
   // Sync editedUser when user loads/updates
   React.useEffect(() => {
@@ -116,6 +109,12 @@ const SettingsScreen = () => {
   };
 
   const handleSaveProfile = async () => {
+    // Add validation for contact number
+    if (editedUser?.contact && editedUser.contact.length > 11) {
+      showError('Contact number cannot exceed 11 digits.');
+      return;
+    }
+
     const result = await (await import('../services/UserService')).default.updateUserProfile({
       // include name so username updates are persisted
       name: editedUser?.name || user?.name || '',
@@ -135,16 +134,28 @@ const SettingsScreen = () => {
     }
   };
 
-  const handleSendFeedback = () => {
+  const handleSendFeedback = async () => {
     if (!feedbackMessage.trim()) {
       showError('Please enter your feedback');
       return;
     }
-    showSuccess('Your feedback has been sent. We appreciate your contribution!');
-    setFeedbackMessage('');
-    setTimeout(() => {
-      setActiveSection(null);
-    }, 1500);
+
+    try {
+      const FeedbackService = (await import('../services/FeedbackService')).default;
+      await FeedbackService.addFeedback({
+        comment: feedbackMessage.trim(),
+        serviceRating: 5,
+        itemsRating: 5,
+      });
+      infoModal.show('Feedback Sent', 'We appreciate your contribution!');
+      setFeedbackMessage('');
+      setTimeout(() => {
+        setActiveSection(null);
+      }, 1500);
+    } catch (error) {
+      console.error('Feedback error:', error);
+      showError('Failed to send feedback');
+    }
   };
 
   const handleLogout = async () => {
@@ -231,8 +242,8 @@ const SettingsScreen = () => {
                 <TextInput
                   style={styles.input}
                   value={editedUser?.address || ''}
-                  onChangeText={(text) => setEditedUser({ ...editedUser, address: text })}
-                  placeholder="Enter your address"
+                  onChangeText={text => setEditedUser({ ...editedUser, address: text })}
+                  placeholder="Street, Barangay, City"
                   placeholderTextColor="#666" // <-- your placeholder color her
                   multiline
                 />
@@ -243,10 +254,10 @@ const SettingsScreen = () => {
                 <TextInput
                   style={styles.input}
                   value={editedUser?.contact || ''}
-                  onChangeText={(text) => setEditedUser({ ...editedUser, contact: text })}
-                  placeholder="Enter your contact number"
+                  onChangeText={text => setEditedUser({ ...editedUser, contact: text })}
+                  placeholder="09XXXXXXXXX"
                   keyboardType="phone-pad"
-                  placeholderTextColor="#666" // <-- your placeholder color her
+                  placeholderTextColor="#666"
                 />
               </View>
 

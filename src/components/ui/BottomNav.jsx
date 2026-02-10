@@ -24,7 +24,7 @@ const BottomNav = ({ activeTab, setActiveTab }) => {
     }).start();
   }, [visible]);
 
-  const iconColor = (name) => (activeTab === name ? '#FFF' : '#888');
+  const getIconColor = (tabName) => (activeTab === tabName ? '#FFF' : '#888');
 
   const cartItemCount = cartItems.reduce((sum, item) => sum + (item.quantity || 1), 0);
 
@@ -41,7 +41,7 @@ const BottomNav = ({ activeTab, setActiveTab }) => {
           accessible
           accessibilityLabel="Home"
         >
-          <Icon name="home" size={20} color={iconColor('home')} />
+          <Icon name="home" size={20} color={getIconColor('home')} />
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -50,7 +50,7 @@ const BottomNav = ({ activeTab, setActiveTab }) => {
           accessibilityLabel="Cart"
           style={styles.cartIconWrapper}
         >
-          <Icon name="shopping-cart" size={20} color={iconColor('cart')} />
+          <Icon name="shopping-cart" size={20} color={getIconColor('cart')} />
           {cartItemCount > 0 && (
             <View style={styles.cartBadge}>
               <Text style={styles.cartBadgeText}>{cartItemCount}</Text>
@@ -63,7 +63,7 @@ const BottomNav = ({ activeTab, setActiveTab }) => {
           accessible
           accessibilityLabel="Profile"
         >
-          <Icon name="user" size={20} color={iconColor('user')} />
+          <Icon name="user" size={20} color={getIconColor('user')} />
         </TouchableOpacity>
       </View>
     </Animated.View>

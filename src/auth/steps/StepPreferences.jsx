@@ -2,11 +2,10 @@ import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import PrimaryButton from '../../components/buttons/PrimaryButton';
+import { storage } from '../../components/storage';
+import { CATEGORIES, CATEGORY_STORAGE_KEY } from '../../constants/categories';
 
 const StepPreferences = ({ preferences, setPreferences, onNext, onBack, onSkip, isLoading = false }) => {
-  // Use actual product categories instead of individual products
-  const categories = ['Coffee', 'Lemonade', 'Pastries', 'Specials', 'Merch'];
-
   // Disable finish button if no preferences selected
   const isPreferencesValid = preferences && preferences.length > 0;
 
@@ -15,6 +14,20 @@ const StepPreferences = ({ preferences, setPreferences, onNext, onBack, onSkip, 
       setPreferences(preferences.filter((p) => p !== item));
     } else {
       setPreferences([...preferences, item]);
+    }
+  };
+
+  const handleCompleteSetup = async () => {
+
+    if (isPreferencesValid) {
+      const primaryPreference = preferences[0];
+      console.log(`Saving primary category preference: ${primaryPreference}`);
+      await storage.setItem(CATEGORY_STORAGE_KEY, primaryPreference);
+    }
+
+    // Proceed to the next step in the onboarding flow.
+    if (onNext) {
+      onNext();
     }
   };
 
@@ -35,7 +48,7 @@ const StepPreferences = ({ preferences, setPreferences, onNext, onBack, onSkip, 
         <Text style={styles.subtitle}>Select what you love, skip the rest</Text>
         
         <View style={styles.optionsContainer}>
-          {categories.map((item) => {
+          {CATEGORIES.map((item) => {
             const selected = preferences.includes(item);
             return (
               <TouchableOpacity
@@ -67,7 +80,7 @@ const StepPreferences = ({ preferences, setPreferences, onNext, onBack, onSkip, 
         {isPreferencesValid ? (
           <PrimaryButton
             title="Complete Setup"
-            onPress={onNext}
+            onPress={handleCompleteSetup}
             icon="arrow-right"
             loading={isLoading}
           />

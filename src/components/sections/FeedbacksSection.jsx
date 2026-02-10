@@ -4,9 +4,9 @@ import Icon from 'react-native-vector-icons/Feather';
 import useFeedbacks from '../../hooks/useFeedbacks';
 import useModal from '../../hooks/useModal';
 import FeedbackService from '../../services/FeedbackService';
+import AllFeedbacksModal from '../ui/AllFeedbacksModal';
+import FeedbackCard from '../ui/FeedbackCard';
 import AddFeedbackForm from './AddFeedbackForm';
-import AllFeedbacksModal from './AllFeedbacksModal';
-import FeedbackCard from './FeedbackCard';
 
 /**
  * FeedbacksSection - Displays randomized customer feedbacks with form to add new ones
@@ -32,7 +32,7 @@ const FeedbacksSection = () => {
       await FeedbackService.addFeedback(feedbackData);
       // Reload feedbacks after adding new one
       await loadFeedbacks();
-      alertModal.show('Thank You!', 'Thank you for your feedback!');
+      alertModal.show('Feedback Sent', 'We appreciate your contribution!');
     } catch (error) {
       console.error('Error submitting feedback:', error);
       alertModal.show('Error', 'Failed to submit feedback. Please try again.');
@@ -60,7 +60,7 @@ const FeedbacksSection = () => {
 
   return (
     <View style={styles.reviewsSection}>
-      {/* Header with View More button */}
+
       <View style={styles.reviewsHeaderContainer}>
         <View style={styles.reviewsHeader}>
           <Icon name="star" size={20} color="#FFC107" fill="#FFC107" />
@@ -229,6 +229,7 @@ const styles = StyleSheet.create({
   modalBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
   modalContent: { width: '80%', backgroundColor: '#FFF', borderRadius: 20, padding: 25, alignItems: 'center' },
   modalTitle: { fontSize: 20, fontWeight: 'bold', marginBottom: 15, color: '#2c3e50', textAlign: 'center' },
+  modalMessage: { fontSize: 16, color: '#7f8c8d', textAlign: 'center', marginBottom: 25 },
   modalButton: { width: '100%', paddingVertical: 12, borderRadius: 10, backgroundColor: '#000', alignItems: 'center' },
   modalButtonText: { fontSize: 14, fontWeight: '600', color: '#ffffff' },
 });

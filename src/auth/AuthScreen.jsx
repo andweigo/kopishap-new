@@ -110,8 +110,6 @@ const AuthScreen = ({ navigation }) => {
         setFormData({ name: '', email: '', password: '', confirmPassword: '', authMethod: 'password' });
         setPreferences([]);
         
-        // 2. Update global user state. 
-        // This triggers AppStack to re-render and switch to AppDrawer automatically.
         setUser(result.user);
         showSuccess('Welcome to Kape Doon!');
       } else {
