@@ -179,7 +179,7 @@ const CompletedTab = ({ orders, navigation }) => {
 
 export default function KapeCart() {
   const navigation = useNavigation();
-  const { cartItems, updateQuantity, updateItemSize, toggleSelection, removeItem: contextRemoveItem } = useCart();
+  const { cartItems, updateQuantity, updateItemSize, toggleSelection, removeItem: contextRemoveItem, showSuccess } = useCart();
   const { userOrders, loading: ordersLoading, loadUserOrders } = useUserOrders();
   const { calculateTotals, getItemTotal } = usePriceCalculator();
   

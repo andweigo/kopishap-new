@@ -1,16 +1,16 @@
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useState } from 'react';
 import {
-    BackHandler,
-    Image,
-    Modal,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  BackHandler,
+  Image,
+  Modal,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Feather';
@@ -229,7 +229,7 @@ export default function Checkout() {
     if (!item) return null;
     
     return (
-      <View key={item?.id || Math.random()} style={styles.card}>
+      <View style={styles.card}>
         <View style={[styles.imageContainer, { backgroundColor: '#f8f8f8' }]}>
           {item.image ? <Image source={item.image} style={styles.productImage} /> : (
             <View style={styles.imagePlaceholder}><Text style={styles.coffeeEmoji}>☕</Text></View>
@@ -263,7 +263,11 @@ export default function Checkout() {
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        {items.map((item) => renderItem({ item }))}
+        {items.map((item, index) => (
+          <View key={`${item?.id || 'item'}-${index}-${item?.size || 'L'}`}>
+            {renderItem({ item })}
+          </View>
+        ))}
 
         <View style={styles.deliverySection}>
           <Text style={styles.sectionLabel}>Delivery Method</Text>

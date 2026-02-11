@@ -8,10 +8,10 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Feather';
+import { useCart } from '../context/CartContext';
 import useCurrentUser from '../hooks/useCurrentUser';
 import useModal from '../hooks/useModal';
 import ModalButton from './buttons/ModalButton';
-import { storage } from './storage';
 
 const DrawerMenuItem = ({ icon, label, onPress, isDanger = false }) => (
   <TouchableOpacity
@@ -33,6 +33,7 @@ const DrawerMenuItem = ({ icon, label, onPress, isDanger = false }) => (
 
 const DrawerContent = ({ navigation }) => {
   const { user, logout } = useCurrentUser();
+  const { clearCartState } = useCart();
   const logoutModal = useModal();
   const infoModal = useModal();
 
@@ -49,15 +50,15 @@ const DrawerContent = ({ navigation }) => {
   };
 
   const handleLogout = async () => {
+    console.log('DrawerContent: logout requested for user', user?.email || 'unknown');
+    
     try {
-      console.log('DrawerContent: logout requested for user', user?.email || 'unknown');
-      // 1. Clear cart from storage
-      await storage.removeItem('@Kopishapp:cartItems');
-      // 2. Clear user data from AsyncStorage via logout hook
+      // Explicitly clear cart state before logging out
+      clearCartState();
       await logout();
-      // 3. Close the modal
+      // Close the modal after logout is complete.
       logoutModal.hide();
-      
+      console.log('DrawerContent: Logout completed');
       // Navigation will automatically switch to Auth stack due to state change
     } catch (error) {
       console.error('Logout error:', error);

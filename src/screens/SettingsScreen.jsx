@@ -15,8 +15,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Feather';
 import ModalButton from '../components/buttons/ModalButton';
-import { storage } from '../components/storage';
 import BottomNav from '../components/ui/BottomNav';
+import { useCart } from '../context/CartContext';
 import useBackHandler from '../hooks/useBackHandler';
 import useCurrentUser from '../hooks/useCurrentUser';
 import useModal from '../hooks/useModal';
@@ -57,6 +57,7 @@ const SettingsScreen = () => {
   const [activeSection, setActiveSection] = useState(null);
   const { user, loadCurrentUser, logout } = useCurrentUser();
   const [editedUser, setEditedUser] = useState(null);
+  const { clearCartState } = useCart();
   const [feedbackMessage, setFeedbackMessage] = useState('');
 
   const logoutModal = useModal();
@@ -161,14 +162,14 @@ const SettingsScreen = () => {
   };
 
   const handleLogout = async () => {
-    // Clear the cart from storage to ensure new users start fresh.
-    // The key '@Kopishapp:cartItems' is an assumption. You may need to find the
-    // exact key used in your CartContext for persisting cart data.
-    await storage.removeItem('@Kopishapp:cartItems');
-
+    console.log('SettingsScreen: Starting logout...');
+    
     try {
+      // Explicitly clear cart state before logging out to ensure it persists
+      clearCartState();
       await logout();
       logoutModal.hide();
+      console.log('SettingsScreen: Logout completed');
     } catch (e) {
       console.error('Logout error:', e);
       logoutModal.hide();

@@ -276,6 +276,31 @@ class OrderService {
   }
 
   /**
+   * Clear all orders and favorites for a specific user.
+   * This is called on logout to clean up user-specific data from the device.
+   * @param {string} userId
+   * @returns {Promise<void>}
+   */
+  async clearUserData(userId) {
+    if (!userId) return;
+    try {
+      // Clear user-specific orders
+      const allOrders = await this.getAllOrders();
+      const otherUserOrders = allOrders.filter((order) => order.userId !== userId);
+      await AsyncStorage.setItem(this.ORDERS_STORAGE_KEY, JSON.stringify(otherUserOrders));
+
+      // Clear user-specific favorites
+      const allFavorites = await this.getAllFavorites();
+      const otherUserFavorites = allFavorites.filter((fav) => fav.userId !== userId);
+      await AsyncStorage.setItem(this.FAVORITES_STORAGE_KEY, JSON.stringify(otherUserFavorites));
+
+      console.log(`OrderService: Cleared all orders and favorites for user ${userId}`);
+    } catch (error) {
+      console.error(`Error clearing user data for ${userId}:`, error);
+    }
+  }
+
+  /**
    * Clear all order data (for testing/reset)
    * @returns {Promise<void>}
    */
