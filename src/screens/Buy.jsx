@@ -1,8 +1,3 @@
-/**
- * Buy Screen
- * Product detail and purchase screen
- * Refactored to use hooks following OOP principles
- */
 import React, { useCallback } from 'react';
 import {
   Dimensions,
@@ -90,7 +85,6 @@ const Buy = ({ navigation, route }) => {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#FDF5E6" />
       
-      {/* HEADER */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
           <Icon name="arrow-left" size={28} color="#000" />

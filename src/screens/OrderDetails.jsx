@@ -1,5 +1,5 @@
 import { useNavigation, useRoute } from '@react-navigation/native';
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Image,
   ScrollView,
@@ -11,12 +11,16 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Feather';
+import CancelOrderModal from '../components/sections/CancelOrderModal';
+import useToast from '../hooks/useToast';
+import OrderService from '../services/OrderService';
 
 const StatusBadge = ({ status = 'completed' }) => {
   const color = useMemo(() => {
     switch (status) {
       case 'completed':
         return '#27ae60';
+      case 'processing':
       case 'pending':
         return '#f39c12';
       case 'confirmed':
@@ -27,6 +31,8 @@ const StatusBadge = ({ status = 'completed' }) => {
         return '#2ecc71';
       case 'delivered':
         return '#16a085';
+      case 'cancelled':
+        return '#e74c3c';
       default:
         return '#95a5a6';
     }
@@ -42,7 +48,9 @@ const StatusBadge = ({ status = 'completed' }) => {
 export default function OrderDetails() {
   const navigation = useNavigation();
   const route = useRoute();
-  const order = route?.params?.order || {};
+  const [order, setOrder] = useState(route?.params?.order || {});
+  const { showSuccess, showError } = useToast();
+  const [isCancelModalVisible, setCancelModalVisible] = useState(false);
 
   const createdAt = order?.createdAt ? new Date(order.createdAt) : new Date();
   const dateStr = createdAt.toLocaleString();
@@ -54,11 +62,32 @@ export default function OrderDetails() {
   const shipping = typeof order?.shipping === 'number' ? order.shipping : 0;
   const total = typeof order?.total === 'number' ? order.total : subtotal + shipping;
 
+  const handleCancelConfirm = async (reason) => {
+    try {
+      // Assumes an `updateOrderStatus` method exists in your OrderService
+      const result = await OrderService.updateOrderStatus(order.id, 'Cancelled', reason);
+      if (result.success) {
+        setOrder(prevOrder => ({ ...prevOrder, status: 'Cancelled' }));
+        showSuccess('Order has been cancelled.');
+      } else {
+        showError(result.message || 'Failed to cancel order.');
+      }
+    } catch (error) {
+      console.error("Cancellation error:", error);
+      showError('An error occurred while cancelling the order.');
+    } finally {
+      setCancelModalVisible(false);
+    }
+  };
+
+  const canCancel =
+    order?.deliveryMethod === 'delivery' &&
+    !['completed', 'delivered', 'cancelled'].includes(order?.status?.toLowerCase());
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#FDF5E6" />
 
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} activeOpacity={0.8}>
           <Icon name="arrow-left" size={28} color="#2c3e50" />
@@ -71,7 +100,6 @@ export default function OrderDetails() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        {/* Order meta */}
         <View style={styles.metaCard}>
           <View style={styles.metaHeader}>
             <Text style={styles.orderId}>Order #{String(order?.id || '').slice(-6).toUpperCase()}</Text>
@@ -81,7 +109,6 @@ export default function OrderDetails() {
           <Text style={styles.metaSub}>Fulfillment: {order?.deliveryAddress || 'Pickup'}</Text>
         </View>
 
-        {/* Items */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Items</Text>
           {Array.isArray(order?.items) && order.items.map((it) => {
@@ -112,7 +139,6 @@ export default function OrderDetails() {
           })}
         </View>
 
-        {/* Totals */}
         <View style={styles.totalsCard}>
           <View style={styles.totalRow}>
             <Text style={styles.totalLabel}>Sub Total</Text>
@@ -128,7 +154,23 @@ export default function OrderDetails() {
             <Text style={styles.grandValue}>₱{total}</Text>
           </View>
         </View>
+
+        {canCancel && (
+          <TouchableOpacity
+            style={styles.cancelButton}
+            onPress={() => setCancelModalVisible(true)}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.cancelButtonText}>Cancel Order</Text>
+          </TouchableOpacity>
+        )}
       </ScrollView>
+
+      <CancelOrderModal
+        visible={isCancelModalVisible}
+        onClose={() => setCancelModalVisible(false)}
+        onConfirm={handleCancelConfirm}
+      />
     </SafeAreaView>
   );
 }
@@ -205,4 +247,21 @@ const styles = StyleSheet.create({
   divider: { height: 1, backgroundColor: '#ecf0f1', marginVertical: 6 },
   grandLabel: { fontSize: 16, fontWeight: '800', color: '#2c3e50' },
   grandValue: { fontSize: 16, fontWeight: '800', color: '#2c3e50' },
+  cancelButton: {
+    marginTop: 20,
+    backgroundColor: '#e74c3c',
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
+  },
+  cancelButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '700',
+  },
 });

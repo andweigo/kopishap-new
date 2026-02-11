@@ -11,6 +11,7 @@ import Icon from 'react-native-vector-icons/Feather';
 import useCurrentUser from '../hooks/useCurrentUser';
 import useModal from '../hooks/useModal';
 import ModalButton from './buttons/ModalButton';
+import { storage } from './storage';
 
 const DrawerMenuItem = ({ icon, label, onPress, isDanger = false }) => (
   <TouchableOpacity
@@ -39,12 +40,22 @@ const DrawerContent = ({ navigation }) => {
     logoutModal.show();
   };
 
+  const navigateToProfile = () => {
+    navigation.navigate('Settings', {
+      screen: 'SettingsScreen',
+      params: { initialSection: 'myAccount' }
+    });
+    navigation.closeDrawer();
+  };
+
   const handleLogout = async () => {
     try {
       console.log('DrawerContent: logout requested for user', user?.email || 'unknown');
-      // 1. First, clear user data from AsyncStorage
+      // 1. Clear cart from storage
+      await storage.removeItem('@Kopishapp:cartItems');
+      // 2. Clear user data from AsyncStorage via logout hook
       await logout();
-      // 2. Close the modal
+      // 3. Close the modal
       logoutModal.hide();
       
       // Navigation will automatically switch to Auth stack due to state change
@@ -56,15 +67,17 @@ const DrawerContent = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <View style={styles.userAvatar}>
-          <Icon name="user" size={40} color="#FFF" />
+      <TouchableOpacity onPress={navigateToProfile} activeOpacity={0.8}>
+        <View style={styles.header}>
+          <View style={styles.userAvatar}>
+            <Icon name="user" size={40} color="#FFF" />
+          </View>
+          <View style={styles.userInfo}>
+            <Text style={styles.userName}>{user?.name || 'Guest'}</Text>
+            <Text style={styles.userEmail}>{user?.email || 'Not logged in'}</Text>
+          </View>
         </View>
-        <View style={styles.userInfo}>
-          <Text style={styles.userName}>{user?.name || 'Guest'}</Text>
-          <Text style={styles.userEmail}>{user?.email || 'Not logged in'}</Text>
-        </View>
-      </View>
+      </TouchableOpacity>
 
       {/* Divider */}
       <View style={styles.divider} />
@@ -146,7 +159,7 @@ const DrawerContent = ({ navigation }) => {
               <ModalButton
                 title="Logout"
                 onPress={handleLogout}
-                
+                variant="primary"
               />
             </View>
           </View>

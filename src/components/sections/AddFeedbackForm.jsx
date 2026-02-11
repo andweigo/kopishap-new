@@ -3,9 +3,6 @@ import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput
 import Icon from 'react-native-vector-icons/Feather';
 import useToast from '../../hooks/useToast';
 
-/**
- * AddFeedbackForm - Form for users to add their own feedback
- */
 const AddFeedbackForm = ({ onSubmit, loading = false }) => {
   const [serviceRating, setServiceRating] = useState(0);
   const [itemsRating, setItemsRating] = useState(0);
@@ -22,7 +19,6 @@ const AddFeedbackForm = ({ onSubmit, loading = false }) => {
       itemsRating,
       comment: comment.trim(),
     });
-    // Reset form
     setServiceRating(0);
     setItemsRating(0);
     setComment('');
@@ -55,19 +51,16 @@ const AddFeedbackForm = ({ onSubmit, loading = false }) => {
         <View style={styles.container}>
       <Text style={styles.title}>Share Your Experience</Text>
 
-      {/* Service Rating */}
       <View style={styles.ratingRow}>
         <Text style={styles.label}>Service Rating</Text>
         {renderStarPicker(serviceRating, setServiceRating)}
       </View>
 
-      {/* Items Rating */}
       <View style={styles.ratingRow}>
         <Text style={styles.label}>Items Rating</Text>
         {renderStarPicker(itemsRating, setItemsRating)}
       </View>
 
-      {/* Comment */}
       <View style={styles.inputContainer}>
         <Text style={styles.label}>Your Feedback</Text>
         <TextInput
@@ -83,7 +76,6 @@ const AddFeedbackForm = ({ onSubmit, loading = false }) => {
         <Text style={styles.charCount}>{comment.length}/200</Text>
       </View>
 
-      {/* Submit Button */}
       <TouchableOpacity
         style={[styles.submitButton, (!serviceRating || !itemsRating || !comment.trim() || loading) && styles.submitButtonDisabled]}
         onPress={handleSubmit}

@@ -1,12 +1,12 @@
 import React from 'react';
 import {
-  Dimensions,
-  Image,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Dimensions,
+    Image,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -59,7 +59,6 @@ const styles = StyleSheet.create({
   },
   logo: {
     width: width * 0.8, 
-    height: width * 0.8,
     resizeMode: 'contain',
   },
   button: {

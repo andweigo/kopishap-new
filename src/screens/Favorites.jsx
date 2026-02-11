@@ -1,15 +1,15 @@
 import { useFocusEffect } from '@react-navigation/native';
 import React, { useState } from 'react';
 import {
-  BackHandler,
-  Dimensions,
-  FlatList,
-  Modal,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View
+    BackHandler,
+    Dimensions,
+    FlatList,
+    Modal,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Feather';
@@ -37,7 +37,6 @@ const Favorites = ({ navigation }) => {
     }, [loadFavorites])
   );
 
-  // Handle Android hardware back button
   useFocusEffect(
     React.useCallback(() => {
       const onBackPress = () => {
@@ -53,8 +52,6 @@ const Favorites = ({ navigation }) => {
       return () => subscription.remove();
     }, [navigation])
   );
-
-  // loadFavorites provided by hook
 
   const handleRemoveFavorite = (productId, productName) => {
     setItemToRemove({ id: productId, name: productName });
@@ -137,7 +134,6 @@ const Favorites = ({ navigation }) => {
 
       <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
 
-      {/* Remove Favorite Confirmation Modal */}
       <Modal
         visible={showRemoveModal}
         transparent

@@ -1,4 +1,4 @@
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useState } from 'react';
 import {
   KeyboardAvoidingView,
@@ -15,6 +15,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Feather';
 import ModalButton from '../components/buttons/ModalButton';
+import { storage } from '../components/storage';
 import BottomNav from '../components/ui/BottomNav';
 import useBackHandler from '../hooks/useBackHandler';
 import useCurrentUser from '../hooks/useCurrentUser';
@@ -51,24 +52,29 @@ const SettingsItem = ({ title, onPress }) => (
 
 const SettingsScreen = () => {
   const navigation = useNavigation();
+  const route = useRoute();
   const [activeTab, setActiveTab] = useState('user');
-  const [activeSection, setActiveSection] = useState(null); // 'myAccount', 'feedback', 'delivery', 'aboutUs', 'helpSupport'
+  const [activeSection, setActiveSection] = useState(null);
   const { user, loadCurrentUser, logout } = useCurrentUser();
   const [editedUser, setEditedUser] = useState(null);
   const [feedbackMessage, setFeedbackMessage] = useState('');
 
-  // Use custom hooks for modal state
   const logoutModal = useModal();
-  const infoModal = useModal(); // Replaces generic modalVisible
+  const infoModal = useModal();
   const { showSuccess, showError } = useToast();
 
   useFocusEffect(
     useCallback(() => {
       loadCurrentUser();
-    }, [loadCurrentUser])
+      const initialSection = route.params?.initialSection;
+      if (initialSection) {
+        setActiveSection(initialSection);
+        // Clear the param so it doesn't trigger again on focus
+        navigation.setParams({ initialSection: null });
+      }
+    }, [loadCurrentUser, route.params?.initialSection])
   );
 
-  // Handle Android hardware back button
   useBackHandler(() => {
     if (activeSection) {
       setActiveSection(null);
@@ -82,7 +88,6 @@ const SettingsScreen = () => {
     return true;
   });
 
-  // Sync editedUser when user loads/updates
   React.useEffect(() => {
     if (user) setEditedUser(user);
   }, [user]);
@@ -109,21 +114,18 @@ const SettingsScreen = () => {
   };
 
   const handleSaveProfile = async () => {
-    // Add validation for contact number
     if (editedUser?.contact && editedUser.contact.length > 11) {
       showError('Contact number cannot exceed 11 digits.');
       return;
     }
 
     const result = await (await import('../services/UserService')).default.updateUserProfile({
-      // include name so username updates are persisted
       name: editedUser?.name || user?.name || '',
       address: editedUser?.address || '',
       contact: editedUser?.contact || '',
     });
 
     if (result.success) {
-      // Refresh current user from storage/service instead of calling an undefined setter
       await loadCurrentUser();
       showSuccess('Profile updated successfully');
       setTimeout(() => {
@@ -159,6 +161,11 @@ const SettingsScreen = () => {
   };
 
   const handleLogout = async () => {
+    // Clear the cart from storage to ensure new users start fresh.
+    // The key '@Kopishapp:cartItems' is an assumption. You may need to find the
+    // exact key used in your CartContext for persisting cart data.
+    await storage.removeItem('@Kopishapp:cartItems');
+
     try {
       await logout();
       logoutModal.hide();
@@ -218,7 +225,6 @@ const SettingsScreen = () => {
           style={{ flex: 1 }}
         >
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-            {/* My Account Section */}
             {activeSection === 'myAccount' && (
               <View style={styles.sectionContainer}>
               
@@ -244,7 +250,7 @@ const SettingsScreen = () => {
                   value={editedUser?.address || ''}
                   onChangeText={text => setEditedUser({ ...editedUser, address: text })}
                   placeholder="Street, Barangay, City"
-                  placeholderTextColor="#666" // <-- your placeholder color her
+                  placeholderTextColor="#666"
                   multiline
                 />
               </View>
@@ -267,7 +273,6 @@ const SettingsScreen = () => {
             </View>
           )}
 
-          {/* Feedback Section */}
           {activeSection === 'feedback' && (
             <View style={styles.sectionContainer}>
               
@@ -284,7 +289,7 @@ const SettingsScreen = () => {
                 value={feedbackMessage}
                 onChangeText={setFeedbackMessage}
                 placeholder="Share your feedback, suggestions, or concerns..."
-                placeholderTextColor="#666" // <-- your placeholder color here
+                placeholderTextColor="#666"
                 multiline
                 numberOfLines={6}
               />
@@ -297,7 +302,6 @@ const SettingsScreen = () => {
             </View>
           )}
 
-          {/* Kape Delivery Section */}
           {activeSection === 'delivery' && (
             <View style={styles.sectionContainer}>
               
@@ -337,7 +341,6 @@ const SettingsScreen = () => {
             </View>
           )}
 
-          {/* About Us Section */}
           {activeSection === 'aboutUs' && (
             <View style={styles.sectionContainer}>
               
@@ -370,12 +373,10 @@ const SettingsScreen = () => {
             </View>
           )}
 
-          {/* Help & Support is handled via the settings modal (see menu action) */}
           </ScrollView>
         </KeyboardAvoidingView>
       )}
 
-      {/* Message Modal (for feedback/account actions) */}
       <Modal
         visible={infoModal.visible}
         transparent
@@ -395,7 +396,6 @@ const SettingsScreen = () => {
         </View>
       </Modal>
 
-      {/* Logout Confirmation Modal */}
       <Modal
         visible={logoutModal.visible}
         transparent

@@ -8,10 +8,6 @@ import AllFeedbacksModal from '../ui/AllFeedbacksModal';
 import FeedbackCard from '../ui/FeedbackCard';
 import AddFeedbackForm from './AddFeedbackForm';
 
-/**
- * FeedbacksSection - Displays randomized customer feedbacks with form to add new ones
- * Shows 3 random customer reviews with ratings
- */
 const FeedbacksSection = () => {
   const [allFeedbacksVisible, setAllFeedbacksVisible] = useState(false);
   const alertModal = useModal();
@@ -25,12 +21,10 @@ const FeedbacksSection = () => {
     loadFeedbacks,
   } = useFeedbacks();
 
-  // Handle feedback submission
   const handleSubmitFeedback = async (feedbackData) => {
     setSubmitting(true);
     try {
       await FeedbackService.addFeedback(feedbackData);
-      // Reload feedbacks after adding new one
       await loadFeedbacks();
       alertModal.show('Feedback Sent', 'We appreciate your contribution!');
     } catch (error) {
@@ -76,7 +70,6 @@ const FeedbacksSection = () => {
         </TouchableOpacity>
       </View>
 
-      {/* Rating and count */}
       <View style={styles.ratingContainer}>
         <View style={styles.ratingValue}>
           <Text style={styles.rating}>{averageRating.toFixed(1)}</Text>
@@ -88,20 +81,16 @@ const FeedbacksSection = () => {
         </Text>
       </View>
 
-      {/* Subtitle */}
       <Text style={styles.reviewsSubtitle}>What our customers are saying</Text>
 
-      {/* Randomized Feedbacks List */}
       <View style={styles.feedbacksList}>
         {randomizedFeedbacks.map((feedback) => (
           <FeedbackCard key={feedback.id} feedback={feedback} />
         ))}
       </View>
 
-      {/* Add Feedback Form */}
       <AddFeedbackForm onSubmit={handleSubmitFeedback} loading={submitting} />
 
-      {/* All Feedbacks Modal */}
       <AllFeedbacksModal
         visible={allFeedbacksVisible}
         onClose={() => setAllFeedbacksVisible(false)}
@@ -110,7 +99,6 @@ const FeedbacksSection = () => {
         totalCount={totalFeedbackCount}
       />
 
-      {/* Alert Modal */}
       <Modal
         visible={alertModal.visible}
         transparent

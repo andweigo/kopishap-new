@@ -1,8 +1,3 @@
-/**
- * MyOrders Screen
- * Displays user's order history
- * Refactored to use hooks following OOP principles
- */
 import { useFocusEffect } from '@react-navigation/native';
 import React, { useState } from 'react';
 import {
@@ -26,6 +21,7 @@ const OrderStatusBadge = ({ status }) => {
     switch (status) {
       case 'processing': return '#f39c12';
       case 'completed': return '#27ae60';
+      case 'cancelled': return '#e74c3c';
       default: return '#95a5a6';
     }
   };
@@ -100,7 +96,6 @@ const MyOrders = ({ navigation }) => {
     }, [loadUserOrders])
   );
 
-  // Handle Android hardware back button
   useFocusEffect(
     React.useCallback(() => {
       const onBackPress = () => {

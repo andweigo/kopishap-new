@@ -1,21 +1,16 @@
-/**
- * Checkout Screen
- * Order review and checkout process
- * Refactored to use hooks following OOP principles
- */
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useState } from 'react';
 import {
-  BackHandler,
-  Image,
-  Modal,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    BackHandler,
+    Image,
+    Modal,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Feather';
@@ -52,10 +47,8 @@ export default function Checkout() {
   const [applyDiscount, setApplyDiscount] = useState(false);
   const [discountAlreadyUsed, setDiscountAlreadyUsed] = useState(false);
 
-  // Calculate totals using the hook
   const { subtotal, shipping, grandTotal } = calculateTotals(items, deliveryMethod);
 
-  // Calculate discount amount
   const discountAmount = applyDiscount && userDiscount > 0 
     ? Math.round((grandTotal * userDiscount) / 100)
     : 0;
@@ -65,19 +58,15 @@ export default function Checkout() {
   useFocusEffect(
     useCallback(() => {
       const loadDiscount = async () => {
-        // Get the unused discount amount for applying
         const discount = await UserService.getUserDiscount();
         setUserDiscount(discount || 0);
         
-        // Get the actual discount value (even if used) for display
         const value = await UserService.getDiscountValue();
         setDiscountValue(value || 0);
         
-        // Check if discount was already used
         const alreadyUsed = await UserService.isDiscountAlreadyUsed();
         setDiscountAlreadyUsed(alreadyUsed);
         
-        // Reset applyDiscount if discount was already used
         if (alreadyUsed) {
           setApplyDiscount(false);
         }
@@ -87,7 +76,6 @@ export default function Checkout() {
     }, [loadCurrentUser])
   );
 
-  // Handle Android hardware back button (and swipe gesture)
   useFocusEffect(
     useCallback(() => {
       const onBackPress = () => {
@@ -113,7 +101,6 @@ export default function Checkout() {
       const effectiveAddress = getEffectiveAddress();
       const effectiveContact = getEffectiveContact();
 
-      // Validate delivery
       if (deliveryMethod === 'delivery') {
         if (!effectiveAddress?.trim() || !effectiveContact?.trim()) {
           setIsSaving(false);
@@ -121,7 +108,6 @@ export default function Checkout() {
         }
       }
 
-      // Normalize items for storage
       const normalizedItems = items.map((item) => ({
         id: item.id,
         name: item.name,
@@ -153,7 +139,6 @@ export default function Checkout() {
         status: deliveryMethod === 'delivery' ? 'processing' : 'completed',
       });
       
-      // Mark discount as used if it was applied
       if (applyDiscount && userDiscount > 0) {
         await UserService.markDiscountAsUsed();
       }
@@ -269,7 +254,6 @@ export default function Checkout() {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#FDF5E6" />
       
-      {/* HEADER */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => infoModal.show('Almost There!', "Just one click to order, then you're all set!")}>
           <Icon name="arrow-left" size={24} color="#000" />
@@ -281,7 +265,6 @@ export default function Checkout() {
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {items.map((item) => renderItem({ item }))}
 
-        {/* Delivery method selection */}
         <View style={styles.deliverySection}>
           <Text style={styles.sectionLabel}>Delivery Method</Text>
           <View style={styles.deliveryOptions}>
@@ -388,7 +371,6 @@ export default function Checkout() {
           )}
         </View>
 
-        {/* Discount Section */}
         {(discountValue > 0 || discountAlreadyUsed) && (
           <View style={styles.discountSection}>
             <TouchableOpacity 

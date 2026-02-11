@@ -1,15 +1,15 @@
 import { useFocusEffect } from '@react-navigation/native';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
-  Dimensions,
-  Modal,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View
+    ActivityIndicator,
+    Dimensions,
+    Modal,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Feather';
@@ -34,7 +34,6 @@ const Home = ({ navigation, route }) => {
   const [activeTab, setActiveTab] = useState('home');
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const [userDiscount, setUserDiscount] = useState(0);
-  // State to hold the initial category. `null` means it's loading.
   const [initialCategory, setInitialCategory] = useState(null);
   const [searchResults, setSearchResults] = useState([]);
   const [isSearchModalVisible, setIsSearchModalVisible] = useState(false);
@@ -43,7 +42,6 @@ const Home = ({ navigation, route }) => {
   const { user } = useCurrentUser();
   const userName = user?.name || route?.params?.userName || '';
 
-  // Generate and show discount on initial mount
   useEffect(() => {
     const generateDiscount = async () => {
       const discount = await UserService.generateAndStoreDiscount();
@@ -55,31 +53,25 @@ const Home = ({ navigation, route }) => {
     generateDiscount();
   }, []);
 
-  // This effect runs ONCE on mount to load the stored category preference.
-  // This ensures the Top Tab Navigator initializes with the correct tab.
   useEffect(() => {
     const loadInitialCategory = async () => {
-      // 1. Check for a temporary "Search Intent" first (high priority)
       const searchIntent = await storage.getItem(SEARCH_INTENT_KEY);
       
       let startCategory = null;
 
       if (searchIntent && searchIntent.category && CATEGORIES.includes(searchIntent.category)) {
         startCategory = searchIntent.category;
-        // Clear the intent so it only applies once
         await storage.removeItem(SEARCH_INTENT_KEY);
       } else {
-        // 2. If no search intent, fall back to saved preference
         const savedCategory = await storage.getItem(CATEGORY_STORAGE_KEY);
         startCategory = savedCategory || DEFAULT_CATEGORY;
       }
 
-      // Set the state. This will trigger a re-render and display the navigator.
       setInitialCategory(startCategory);
     };
 
     loadInitialCategory();
-  }, []); // Empty array ensures this runs only once.
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -87,10 +79,6 @@ const Home = ({ navigation, route }) => {
     }, [])
   );
 
-  /**
-   * Handles selecting a product from the search results modal.
-   * It closes the modal, clears the search, and navigates to the Buy screen.
-   */
   const handleProductSelect = (product) => {
     setIsSearchModalVisible(false);
     setSearchQuery('');
@@ -105,14 +93,9 @@ const Home = ({ navigation, route }) => {
     setIsSearchModalVisible(true);
   };
 
-  /**
-   * Handles text input in the main search bar.
-   * Filters products and shows suggestions.
-   */
   const handleSearch = (text) => {
     setSearchQuery(text);
 
-    // Hide modal while typing to show suggestions
     if (isSearchModalVisible) {
       setIsSearchModalVisible(false);
     }
@@ -133,7 +116,6 @@ const Home = ({ navigation, route }) => {
     <SafeAreaView style={styles.safeAreaContainer} edges={['top', 'left', 'right']}>
       <StatusBar barStyle="dark-content" backgroundColor="#FDF5E6" />
 
-      {/* Fixed Header */}
       <View style={styles.fixedHeader}>
         <HomeHeader
           searchQuery={searchQuery}
@@ -159,36 +141,29 @@ const Home = ({ navigation, route }) => {
         )}
       </View>
 
-      {/* Scrollable content container */}
       <ScrollView 
         style={styles.scrollViewContainer}
         contentContainerStyle={{ paddingBottom: 110 }}
         showsVerticalScrollIndicator={false}
         scrollEventThrottle={16}
       >
-        {/* Categories heading */}
         <View style={styles.featContainer}>
           <Text style={styles.featText}>Categories</Text>
         </View>
 
-        {/* Top Tab Navigator for Product Categories */}
         <View style={styles.tabWrapper}>
-          {/* Conditionally render the navigator ONLY after the initial category is loaded */}
           {initialCategory ? (
             <ProductTabNavigator
-              // Pass an empty search query to prevent tabs from filtering
               searchQuery=""
               initialTab={initialCategory}
             />
           ) : (
-            // Show a loading indicator while fetching the preference
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color="#030303ff" />
             </View>
           )}
         </View>
 
-        {/* All products section beneath the tabs */}
         <View style={styles.allProductsWrapper}>
           <AllProducts searchQuery="" setSearchQuery={() => {}} />
         </View>
@@ -206,7 +181,6 @@ const Home = ({ navigation, route }) => {
 
       <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
 
-      {/* Welcome Modal with Discount */}
       <Modal
         visible={showWelcomeModal}
         transparent

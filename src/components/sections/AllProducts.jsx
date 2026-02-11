@@ -1,4 +1,3 @@
-// src/components/sections/AllProducts.jsx
 import React, { useState } from 'react';
 import { Dimensions, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { ALL_PRODUCTS } from '../../data/products';

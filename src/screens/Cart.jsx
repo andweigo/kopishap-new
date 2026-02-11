@@ -1,8 +1,3 @@
-/**
- * Cart Screen
- * Shopping cart with tabs for All, Orders, and Completed
- * Refactored to use hooks following OOP principles
- */
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import React, { useState } from 'react';
@@ -37,43 +32,47 @@ const SelectAllHeader = ({ isSelected, onToggle, label = "Select All" }) => (
 );
 
 const AllTab = ({ items, cartProps, onBuyPress, buttonLabel, isAllSelected, onSelectAll }) => {
-  const selectedItems = items.filter(item => item.selected);
+  if (items.length === 0) {
+    return (
+      <View style={styles.emptyTabContainer}>
+        <Image source={require('../imgs/no_prod.jpg')} style={styles.emptyStateImage} />
+        <Text style={styles.emptyStateText}>Your cart is empty.</Text>
+      </View>
+    );
+  }
   
+  const selectedItems = items.filter(item => item.selected);
   return (
-  <View style={{ flex: 1 }}>
-    <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 20, paddingBottom: 520, backgroundColor: '#FDF5E6' }} showsVerticalScrollIndicator={false}>
-      {items.length > 0 && <SelectAllHeader isSelected={isAllSelected} onToggle={onSelectAll} />}
-      
-      {items.length === 0 ? (
-        <View style={styles.emptyStateContainer}>
-          <Image source={require('../imgs/no_prod.jpg')} style={styles.emptyStateImage} />
-          <Text style={styles.emptyStateText}>Your cart is empty.</Text>
-        </View>
-      ) : items.map(item => (
-        <CartProductCard key={item.id} item={item} {...cartProps} />
-      ))}
-    </ScrollView>
-    {items.length > 0 && <FloatingBuyButton items={selectedItems} buttonLabel={buttonLabel} onPress={() => onBuyPress(selectedItems)} />}
-  </View>
-);
+    <View style={{ flex: 1 }}>
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 20, paddingBottom: 120, backgroundColor: '#FDF5E6' }} showsVerticalScrollIndicator={false}>
+        <SelectAllHeader isSelected={isAllSelected} onToggle={onSelectAll} />
+        {items.map(item => (
+          <CartProductCard key={item.id} item={item} {...cartProps} />
+        ))}
+      </ScrollView>
+      <FloatingBuyButton items={selectedItems} buttonLabel={buttonLabel} onPress={() => onBuyPress(selectedItems)} />
+    </View>
+  );
 }
 
 const OrdersTab = ({ items, cartProps, onBuyPress, buttonLabel, isAllSelected, onSelectAll }) => {
+  if (items.length === 0) {
+    return (
+      <View style={styles.emptyTabContainer}>
+        <Text style={styles.emptyStateText}>No items pending checkout.</Text>
+      </View>
+    );
+  }
   const selectedItems = items.filter(item => item.selected);
   return (
   <View style={{ flex: 1 }}>
-    <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 20, paddingBottom: 600, backgroundColor: '#FDF5E6' }} showsVerticalScrollIndicator={false}>
-      {items.length > 0 && <SelectAllHeader isSelected={isAllSelected} onToggle={onSelectAll} />}
-
-      {items.length === 0 ? (
-        <View style={styles.emptyStateContainer}>
-          <Text style={styles.emptyStateText}>No items pending checkout.</Text>
-        </View>
-      ) : items.map(item => (
+    <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 20, paddingBottom: 120, backgroundColor: '#FDF5E6' }} showsVerticalScrollIndicator={false}>
+      <SelectAllHeader isSelected={isAllSelected} onToggle={onSelectAll} />
+      {items.map(item => (
         <CartProductCard key={item.id} item={item} {...cartProps} />
       ))}
     </ScrollView>
-    {items.length > 0 && <FloatingBuyButton items={selectedItems} buttonLabel={buttonLabel} onPress={() => onBuyPress(selectedItems)} />}
+    <FloatingBuyButton items={selectedItems} buttonLabel={buttonLabel} onPress={() => onBuyPress(selectedItems)} />
   </View>
 );
 }
@@ -83,6 +82,7 @@ const OrderStatusBadge = ({ status }) => {
     switch (status) {
       case 'processing': return '#f39c12';
       case 'completed': return '#27ae60';
+      case 'cancelled': return '#e74c3c';
       default: return '#95a5a6';
     }
   };
@@ -155,20 +155,27 @@ const OrderCard = ({ order, navigation }) => {
   );
 };
 
-const CompletedTab = ({ orders, navigation }) => (
-  <FlatList
-    data={orders}
-    keyExtractor={(it) => it.id}
-    renderItem={({ item }) => <OrderCard order={item} navigation={navigation} />}
-    contentContainerStyle={styles.listContent}
-    showsVerticalScrollIndicator={false}
-    ListEmptyComponent={
-      <View style={styles.emptyStateContainer}>
-        <Text style={styles.emptyStateText}>No completed transactions yet.</Text>
-      </View>
-    }
-  />
-);
+const CompletedTab = ({ orders, navigation }) => {
+  const listContainerStyle = [
+    styles.listContent,
+    orders.length === 0 && styles.listContentEmpty,
+  ];
+
+  return (
+    <FlatList
+      data={orders}
+      keyExtractor={(it) => it.id}
+      renderItem={({ item }) => <OrderCard order={item} navigation={navigation} />}
+      contentContainerStyle={listContainerStyle}
+      showsVerticalScrollIndicator={false}
+      ListEmptyComponent={
+        <View style={styles.emptyStateContainer}>
+          <Text style={styles.emptyStateText}>No completed transactions yet.</Text>
+        </View>
+      }
+    />
+  );
+};
 
 export default function KapeCart() {
   const navigation = useNavigation();
@@ -221,7 +228,7 @@ export default function KapeCart() {
 
   const handleBuyPress = (itemsToBuy) => {
     if (itemsToBuy.length === 0) {
-      return; // Do nothing if no items selected
+      return;
     }
 
     const itemsToCheckout = itemsToBuy.map(item => ({
@@ -332,9 +339,9 @@ const styles = StyleSheet.create({
   cartIconButton: { marginLeft: 'auto', width: 40, height: 40, justifyContent: 'center', alignItems: 'center', position: 'relative' },
   plusBadge: { position: 'absolute', top: -2, right: -2, width: 16, height: 16, borderRadius: 8, backgroundColor: '#000', justifyContent: 'center', alignItems: 'center' },
   badgeText: { color: '#fff', fontSize: 10, fontWeight: 'bold' },
-  emptyStateContainer: { alignItems: 'center', padding: 20 },
+  emptyStateContainer: { alignItems: 'center', padding: 20, justifyContent: 'center' },
   emptyStateImage: { width: 70, height: 70, marginBottom: 12 },
-  emptyStateText: { fontSize: 18 },
+  emptyStateText: { fontSize: 18, textAlign: 'center' },
   orderCard: { backgroundColor: '#FFF', padding: 12, borderRadius: 12, marginBottom: 12 },
   orderTitle: { fontSize: 16, fontWeight: '700' },
   orderMeta: { fontSize: 12, color: '#666' },
@@ -348,7 +355,7 @@ const styles = StyleSheet.create({
   orderFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   totalPrice: { fontSize: 16, fontWeight: '700', color: '#2c3e50' },
   subPrice: { fontSize: 12, color: '#95a5a6', marginTop: 2 },
-  listContent: { paddingHorizontal: 15, paddingVertical: 10, paddingBottom: 630, backgroundColor: '#FDF5E6' },
+  listContent: { paddingHorizontal: 15, paddingVertical: 10, paddingBottom: 100, backgroundColor: '#FDF5E6' },
   buyAgainButton: { flexDirection: 'row', backgroundColor: '#000', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8, alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 12 },
   buyAgainText: { color: '#FFF', fontSize: 14, fontWeight: '700' },
   
@@ -379,5 +386,17 @@ const styles = StyleSheet.create({
   checkboxSelected: { 
     backgroundColor: '#2c3e50',
     borderColor: '#2c3e50',
+  },
+  emptyTabContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FDF5E6',
+    paddingBottom: 80,
+  },
+  listContentEmpty: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    paddingBottom: 80,
   },
 });
